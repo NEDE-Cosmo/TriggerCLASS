@@ -497,6 +497,11 @@ class_precision_parameter(num_mu_minus_lmax,int,70) /**< difference between num_
 class_precision_parameter(delta_l_max,int,500)/**< difference between l_max in unlensed and lensed spectra */
 class_precision_parameter(tol_gauss_legendre,double,ppr->smallest_allowed_variation) /**< tolerance with which quadrature points are found: must be very small for an accurate integration (if not entered manually, set automatically to match machine precision) */
 
+/*New EDE*/			  
+/* Makes integration around EDE decay finer. */
+class_precision_parameter(decay_res_enhancement,double,0)
+class_precision_parameter(sub_dom_cond,double,0) 
+			  
 #undef class_precision_parameter
 #undef class_string_parameter
 #undef class_type_parameter

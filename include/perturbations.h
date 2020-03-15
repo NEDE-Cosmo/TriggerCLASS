@@ -33,6 +33,13 @@ enum rsa_idr_flags {rsa_idr_off, rsa_idr_on};
 enum ufa_flags {ufa_off, ufa_on};
 enum ncdmfa_flags {ncdmfa_off, ncdmfa_on};
 
+/* New EDE, before decay CCa_on, corresponding to no perts.*/ 
+enum CCa_flags {CCa_on, CCa_off};
+
+/*New EDE, we stop tracking NewEDE pert when sda_on*/
+enum sda_flags {sda_off, sda_on};
+
+
 //@}
 
 /**
@@ -172,6 +179,10 @@ struct perturbs
   double three_ceff2_ur;/**< 3 x effective squared sound speed for the ultrarelativistic perturbations */
   double three_cvis2_ur;/**< 3 x effective viscosity parameter for the ultrarelativistic perturbations */
 
+  double three_ceff2_NEDE;
+  double three_cvis2_NEDE;
+
+
   double z_max_pk; /**< when we compute only the matter spectrum / transfer functions, but not the CMB, we are sometimes interested to sample source functions at very high redshift, way before recombination. This z_max_pk will then fix the initial sampling time of the sources. */
 
   double * alpha_idm_dr; /**< Angular contribution to collisional term at l>=2 for idm_fr-idr */
@@ -259,6 +270,11 @@ struct perturbs
   short has_source_theta_idr;   /**< do we need source for theta of interacting dark radiation? */
   short has_source_theta_idm_dr;/**< do we need source for theta of interacting dark matter (with dr)? */
   short has_source_theta_ncdm;  /**< do we need source for theta of all non-cold dark matter species (e.g. massive neutrinos)? */
+
+  short has_source_delta_NEDE;   /*New EDE*/
+  short has_source_theta_NEDE;   /*New EDE*/
+  
+  
   short has_source_phi;         /**< do we need source for metric fluctuation phi? */
   short has_source_phi_prime;   /**< do we need source for metric fluctuation phi'? */
   short has_source_phi_plus_psi;/**< do we need source for metric fluctuation (phi+psi)? */
@@ -320,6 +336,9 @@ struct perturbs
   int index_tp_eta_prime;    /**< index value for metric fluctuation eta' */
   int index_tp_H_T_Nb_prime; /**< index value for metric fluctuation H_T_Nb' */
   int index_tp_k2gamma_Nb;   /**< index value for metric fluctuation gamma times k^2 in Nbody gauge */
+
+  int index_tp_delta_NEDE; /*New EDE*/
+  int index_tp_theta_NEDE; /*New EDE*/
 
   int * tp_size; /**< number of types tp_size[index_md] included in computation for each mode */
 
@@ -481,6 +500,14 @@ struct perturb_vector
   int index_pt_l3_idr;    /**< l=3 of interacting dark radiation */
   int l_max_idr;          /**< max momentum in Boltzmann hierarchy (at least 3) for interacting dark radiation */
 
+  
+  int index_pt_delta_EDE;
+  int index_pt_theta_EDE;
+  int index_pt_shear_EDE;
+  int index_pt_delta_trigger;
+  int index_pt_rho_plus_p_theta_trigger;
+
+
 /* perturbed recombination */
   int index_pt_perturbed_recombination_delta_temp;		/**< Gas temperature perturbation */
   int index_pt_perturbed_recombination_delta_chi;		/**< Inionization fraction perturbation */
@@ -620,6 +647,9 @@ struct perturb_workspace
   int index_ap_rsa_idr; /**< index for dark radiation streaming approximation */
   int index_ap_ufa; /**< index for ur fluid approximation */
   int index_ap_ncdmfa; /**< index for ncdm fluid approximation */
+  int index_ap_CCa; /**< index for New EDE approximation*/
+  int index_ap_sda; /**< index for New EDE approximation*/
+
   int ap_size;      /**< number of relevant approximations for a given mode */
 
   int * approx;     /**< array of approximation flags holding at a given time: approx[index_ap] */

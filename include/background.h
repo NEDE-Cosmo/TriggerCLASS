@@ -61,6 +61,45 @@ struct background
 
   double Omega0_fld; /**< \f$ \Omega_{0 de} \f$: fluid */
 
+
+  /*New EDE  before decay*/
+  double Omega_NEDE;
+
+  /*New EDE  today*/
+  double Omega0_NEDE;  
+
+  /*New EDE  trigger at decay time*/
+  double Omega_trigger_decay;
+
+  short Junction_tag;
+
+  /*Decay time triggere*/
+  double Bubble_trigger_H_over_m;
+
+  /*Trigger field mass**/
+  double NEDE_trigger_mass;
+
+  /*Trigger initial field value**/
+  double NEDE_trigger_ini;
+
+  /*Omega trigger field today*/
+  double Omega0_trigger;
+
+  double phi_ini_trigger;      
+  double phi_prime_ini_trigger;
+
+  /*NEDE e.o.s.*/
+  double three_eos_NEDE;
+
+  /* New EDE decay flag */
+  short decay_flag;
+
+  /* New EDE decay time */
+  double tau_decay;
+  double a_decay;
+  double z_decay; 
+
+
   enum equation_of_state fluid_equation_of_state; /**< parametrisation scheme for fluid equation of state */
 
   double w0_fld; /**< \f$ w0_{DE} \f$: current fluid equation of state parameter */
@@ -194,6 +233,8 @@ struct background
   int index_bg_rho_dcdm;      /**< dcdm density */
   int index_bg_rho_dr;        /**< dr density */
 
+  int index_bg_rho_NEDE;      /**< New EDE density */
+ 
   int index_bg_phi_scf;       /**< scalar field value */
   int index_bg_phi_prime_scf; /**< scalar field derivative wrt conformal time */
   int index_bg_V_scf;         /**< scalar field potential V */
@@ -203,6 +244,16 @@ struct background
   int index_bg_p_scf;         /**< scalar field pressure */
   int index_bg_p_prime_scf;         /**< scalar field pressure */
 
+  int index_bg_phi_trigger;       /**< trigger field value */
+  int index_bg_phi_prime_trigger; /**< trigger field derivative wrt conformal time */
+  int index_bg_V_trigger;         /**< trigger field potential V */
+  int index_bg_dV_trigger;        /**< trigger field potential derivative V' */
+  int index_bg_ddV_trigger;       /**< trigger field potential second derivative V'' */
+  int index_bg_rho_trigger;       /**< trigger field energy density */
+  int index_bg_p_trigger;         /**< trigger field pressure */
+  int index_bg_p_prime_trigger;         /**< scalar field pressure */
+
+  
   int index_bg_rho_ncdm1;     /**< density of first ncdm species (others contiguous) */
   int index_bg_p_ncdm1;       /**< pressure of first ncdm species (others contiguous) */
   int index_bg_pseudo_p_ncdm1;/**< another statistical momentum useful in ncdma approximation */
@@ -273,6 +324,11 @@ struct background
   int index_bi_phi_scf;       /**< {B} scalar field value */
   int index_bi_phi_prime_scf; /**< {B} scalar field derivative wrt conformal time */
 
+  int index_bi_phi_trigger;       /**< {B} scalar field value */
+  int index_bi_phi_prime_trigger; /**< {B} scalar field derivative wrt conformal time */
+
+
+  
   int index_bi_time;    /**< {C} proper (cosmological) time in Mpc */
   int index_bi_rs;      /**< {C} sound horizon */
   int index_bi_tau;     /**< {C} conformal time in Mpc */
@@ -298,6 +354,7 @@ struct background
   short has_dcdm;      /**< presence of decaying cold dark matter? */
   short has_dr;        /**< presence of relativistic decay radiation? */
   short has_scf;       /**< presence of a scalar field? */
+ 
   short has_ncdm;      /**< presence of non-cold dark matter? */
   short has_lambda;    /**< presence of cosmological constant? */
   short has_fld;       /**< presence of fluid with constant w and cs2? */
@@ -305,6 +362,11 @@ struct background
   short has_idr;       /**< presence of interacting dark radiation? */
   short has_idm_dr;    /**< presence of dark matter interacting with dark radiation? */
   short has_curvature; /**< presence of global spatial curvature? */
+
+  short has_NEDE; /**< presence of NEDE */
+  short has_NEDE_pert;  /**< presence of NEDE perturbations*/
+  short has_NEDE_trigger;
+
 
   //@}
 
@@ -542,6 +604,25 @@ extern "C" {
                  double phi
                  );
 
+  /** Trigger field potential and its derivatives **/
+  double V_trigger(
+               struct background *pba,
+               double phi
+               );
+
+  double dV_trigger(
+		struct background *pba,
+		double phi
+		);
+
+  double ddV_trigger(
+                 struct background *pba,
+                 double phi
+                 );
+
+
+
+  
   /** Coupling between scalar field and matter **/
   double Q_scf(
                struct background *pba,
