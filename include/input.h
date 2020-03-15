@@ -300,6 +300,14 @@ extern "C" {
                           ErrorMsg errmsg
                           );
 
+  /* New EDE */
+  int find_z_decay(
+		   struct precision * ppr,
+		   struct background *pba,
+		   ErrorMsg errmsg
+		   );
+
+
 
 #ifdef __cplusplus
 }
