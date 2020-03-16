@@ -1839,7 +1839,7 @@ int background_solve(
 	 pba->a_decay = a;
 	 pba->Omega_trigger_decay = pvecback[pba->index_bg_rho_trigger] /  pow(pba->H0,2);  
 	 if (pba->background_verbose > 0){ 
-	   printf("New EDE decayed at redshift: %f ; fraction New EDE: %f; fraction trigger field: %e \n",pba->z_decay,  pba->Omega_NEDE * pow(pba->H0,2) / (pow(pvecback[pba->index_bg_H],2)), pvecback[pba->index_bg_rho_scf] / pow(pvecback[pba->index_bg_H],2) );
+	   printf("New EDE decayed at redshift: %f ; fraction New EDE: %f; fraction trigger field: %e \n",pba->z_decay,  pba->Omega_NEDE * pow(pba->H0,2) / (pow(pvecback[pba->index_bg_H],2)), pvecback[pba->index_bg_rho_trigger] / pow(pvecback[pba->index_bg_H],2) );
  	 }
        }
        /*Flo:  make integration finer around decay time*/
