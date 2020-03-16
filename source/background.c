@@ -1825,7 +1825,7 @@ int background_solve(
       a=pvecback_integration[pba->index_bi_a];
 
       /*Check if we need to track evolution of scalar field, i.e. if we are still before decay. 1.01 is a safety factor to make sure the decay has happend. */
-       if ((pba->NEDE_trigger_mass * pba->Bubble_trigger_H_over_m > pvecback[pba->index_bg_H]) *1.01 && (pba->decay_flag == _TRUE_)) {
+       if ((pba->NEDE_trigger_mass * pba->Bubble_trigger_H_over_m > pvecback[pba->index_bg_H]) *1.01 && (pba->decay_flag == _TRUE_) && pba->has_NEDE_trigger) {
 	 pvecback_integration[pba->index_bi_phi_trigger] = 0.;
 	 pvecback_integration[pba->index_bi_phi_prime_trigger] = 0.;
 	 // tell the integrator to integrat two variables less.
@@ -1837,9 +1837,13 @@ int background_solve(
 	 pba->decay_flag = _TRUE_; 
 	 pba->z_decay = 1. /a -1.;
 	 pba->a_decay = a;
-	 pba->Omega_trigger_decay = pvecback[pba->index_bg_rho_trigger] /  pow(pba->H0,2);  
+	 if (pba->has_NEDE_trigger)
+	   pba->Omega_trigger_decay = pvecback[pba->index_bg_rho_trigger] /  pow(pba->H0,2);
+	 else
+	   pba->Omega_trigger_decay = 0.;
+	 
 	 if (pba->background_verbose > 0){ 
-	   printf("New EDE decayed at redshift: %f ; fraction New EDE: %f; fraction trigger field: %e \n",pba->z_decay,  pba->Omega_NEDE * pow(pba->H0,2) / (pow(pvecback[pba->index_bg_H],2)), pvecback[pba->index_bg_rho_trigger] / pow(pvecback[pba->index_bg_H],2) );
+	   printf("New EDE decayed at redshift: %f ; fraction New EDE: %f; fraction trigger field: %e \n",pba->z_decay,  pba->Omega_NEDE * pow(pba->H0,2) / (pow(pvecback[pba->index_bg_H],2)), pba->Omega_trigger_decay* pow(pba->H0,2) / pow(pvecback[pba->index_bg_H],2) );
  	 }
        }
        /*Flo:  make integration finer around decay time*/
@@ -2054,7 +2058,7 @@ int background_solve(
       printf("     -> Omega_ini_dcdm/Omega_b = %f\n",pba->Omega_ini_dcdm/pba->Omega0_b);
     }
 
-    if (pba->has_NEDE_trigger == _TRUE_ && pba->has_NEDE ==_TRUE_){
+    if  (pba->has_NEDE ==_TRUE_){
       
       printf("  -> New EDE details:\n");
       printf("     -> Percolation trigger (H/m): %f \n", pba->Bubble_trigger_H_over_m);
@@ -2062,8 +2066,9 @@ int background_solve(
       printf("     -> e.o.s. NEDE: %e \n",pba->three_eos_NEDE/3.);
       
       printf("     -> resolution_enhancement: %e \n",ppr->decay_res_enhancement);
-      printf("     -> Omega_trigger = %g, Trigger_ini = %g \n",
-             pvecback[pba->index_bg_rho_trigger]/pvecback[pba->index_bg_rho_crit],pba->NEDE_trigger_ini);   
+      if (pba->has_NEDE_trigger == _TRUE_)
+	printf("     -> Omega_trigger = %g, Trigger_ini = %g \n",
+	       pvecback[pba->index_bg_rho_trigger]/pvecback[pba->index_bg_rho_crit],pba->NEDE_trigger_ini);   
     }
     
 
