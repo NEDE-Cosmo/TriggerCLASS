@@ -230,6 +230,7 @@ int perturb_output_data(
           class_store_double(dataptr,tk[ppt->index_tp_delta_idm_dr],ppt->has_source_delta_idm_dr,storeidx);
           class_store_double(dataptr,tk[ppt->index_tp_delta_fld],ppt->has_source_delta_fld,storeidx);
           class_store_double(dataptr,tk[ppt->index_tp_delta_ur],ppt->has_source_delta_ur,storeidx);
+	  class_store_double(dataptr,tk[ppt->index_tp_delta_NEDE],ppt->has_source_delta_NEDE,storeidx);
           class_store_double(dataptr,tk[ppt->index_tp_delta_idr],ppt->has_source_delta_idr,storeidx);
           if (pba->has_ncdm == _TRUE_){
             for (n_ncdm = 0; n_ncdm < pba->N_ncdm; n_ncdm++){
@@ -239,6 +240,7 @@ int perturb_output_data(
           class_store_double(dataptr,tk[ppt->index_tp_delta_dcdm],ppt->has_source_delta_dcdm,storeidx);
           class_store_double(dataptr,tk[ppt->index_tp_delta_dr],ppt->has_source_delta_dr,storeidx);
           class_store_double(dataptr,tk[ppt->index_tp_delta_scf],ppt->has_source_delta_scf,storeidx);
+	  //class_store_double(dataptr,tk[ppt->index_tp_delta_trigger],ppt->has_source_delta_trigger,storeidx);
           class_store_double(dataptr,tk[ppt->index_tp_delta_tot],ppt->has_source_delta_tot,storeidx);
           class_store_double(dataptr,tk[ppt->index_tp_phi],ppt->has_source_phi,storeidx);
           class_store_double(dataptr,tk[ppt->index_tp_psi],ppt->has_source_psi,storeidx);
@@ -258,6 +260,7 @@ int perturb_output_data(
           class_store_double(dataptr,tk[ppt->index_tp_theta_idm_dr],ppt->has_source_theta_idm_dr,storeidx);
           class_store_double(dataptr,tk[ppt->index_tp_theta_fld],ppt->has_source_theta_fld,storeidx);
           class_store_double(dataptr,tk[ppt->index_tp_theta_ur],ppt->has_source_theta_ur,storeidx);
+	  class_store_double(dataptr,tk[ppt->index_tp_theta_NEDE],ppt->has_source_theta_NEDE,storeidx);
           class_store_double(dataptr,tk[ppt->index_tp_theta_idr],ppt->has_source_theta_idr,storeidx);
           if (pba->has_ncdm == _TRUE_){
             for (n_ncdm = 0; n_ncdm < pba->N_ncdm; n_ncdm++){
@@ -267,6 +270,7 @@ int perturb_output_data(
           class_store_double(dataptr,tk[ppt->index_tp_theta_dcdm],ppt->has_source_theta_dcdm,storeidx);
           class_store_double(dataptr,tk[ppt->index_tp_theta_dr],ppt->has_source_theta_dr,storeidx);
           class_store_double(dataptr,tk[ppt->index_tp_theta_scf],ppt->has_source_theta_scf,storeidx);
+	  // class_store_double(dataptr,tk[ppt->index_tp_theta_trigger],ppt->has_source_theta_trigger,storeidx);
           class_store_double(dataptr,tk[ppt->index_tp_theta_tot],ppt->has_source_theta_tot,storeidx);
 
         }
@@ -323,6 +327,7 @@ int perturb_output_titles(
       class_store_columntitle(titles,"d_idm_dr",pba->has_idm_dr);
       class_store_columntitle(titles,"d_fld",pba->has_fld);
       class_store_columntitle(titles,"d_ur",pba->has_ur);
+      class_store_columntitle(titles,"d_NEDE",pba->has_NEDE_pert);
       class_store_columntitle(titles,"d_idr",pba->has_idr);
       if (pba->has_ncdm == _TRUE_) {
         for (n_ncdm=0; n_ncdm < pba->N_ncdm; n_ncdm++) {
@@ -333,6 +338,7 @@ int perturb_output_titles(
       class_store_columntitle(titles,"d_dcdm",pba->has_dcdm);
       class_store_columntitle(titles,"d_dr",pba->has_dr);
       class_store_columntitle(titles,"d_scf",pba->has_scf);
+      //class_store_columntitle(titles,"d_trigger",pba->has_NEDE_trigger);
       class_store_columntitle(titles,"d_tot",_TRUE_);
       class_store_columntitle(titles,"phi",ppt->has_source_phi);
       class_store_columntitle(titles,"psi",ppt->has_source_psi);
@@ -351,6 +357,7 @@ int perturb_output_titles(
       class_store_columntitle(titles,"t_idm_dr",pba->has_idm_dr);
       class_store_columntitle(titles,"t_fld",pba->has_fld);
       class_store_columntitle(titles,"t_ur",pba->has_ur);
+      class_store_columntitle(titles,"t_NEDE",pba->has_NEDE_pert);
       class_store_columntitle(titles,"t_idr",pba->has_idr);
       if (pba->has_ncdm == _TRUE_) {
         for (n_ncdm=0; n_ncdm < pba->N_ncdm; n_ncdm++) {
@@ -361,6 +368,7 @@ int perturb_output_titles(
       class_store_columntitle(titles,"t_dcdm",pba->has_dcdm);
       class_store_columntitle(titles,"t_dr",pba->has_dr);
       class_store_columntitle(titles,"t__scf",pba->has_scf);
+      //class_store_columntitle(titles,"t__trigger",pba->has_NEDE_trigger);
       class_store_columntitle(titles,"t_tot",_TRUE_);
     }
   }
@@ -509,6 +517,15 @@ int perturb_init(
       printf("Computing sources\n");
   }
 
+  if (pba->has_NEDE && ppt->perturbations_verbose > 1){
+    printf("  -> EDE perturbation details:\n");
+    printf("     -> 3ceff2: %f, 3cvis2: %f \n",ppt->three_ceff2_NEDE,ppt->three_cvis2_NEDE);
+    printf("     -> Junction_tag: %d \n",pba->Junction_tag);
+    printf("     -> EDE sub dom condition: %f \n",ppr->sub_dom_cond);    
+  }
+
+
+  
   class_test((ppt->gauge == synchronous) && (pba->has_cdm == _FALSE_),
              ppt->error_message,
              "In the synchronous gauge, it is not self-consistent to assume no CDM: the later is used to define the initial timelike hypersurface. You can either add a negligible amount of CDM or switch to newtonian gauge");
@@ -1047,6 +1064,11 @@ int perturb_indices(
   ppt->has_source_delta_scf = _FALSE_;
   ppt->has_source_delta_dr = _FALSE_;
   ppt->has_source_delta_ur = _FALSE_;
+  ppt->has_source_delta_NEDE = _FALSE_;
+  ppt->has_source_theta_NEDE = _FALSE_;
+  ppt->has_source_delta_trigger = _FALSE_;
+  ppt->has_source_theta_trigger = _FALSE_; 
+
   ppt->has_source_delta_idr = _FALSE_;
   ppt->has_source_delta_idm_dr = _FALSE_;
   ppt->has_source_delta_ncdm = _FALSE_;
@@ -1160,6 +1182,10 @@ int perturb_indices(
           ppt->has_source_delta_dr = _TRUE_;
         if (pba->has_ncdm == _TRUE_)
           ppt->has_source_delta_ncdm = _TRUE_;
+	if (pba->has_NEDE == _TRUE_)
+	  ppt->has_source_delta_NEDE = _TRUE_;
+	//No source for the subdom trigger field required.
+
         // Thanks to the following lines, (phi,psi) are also stored as sources
         // (Obtained directly in newtonian gauge, infereed from (h,eta) in synchronous gauge).
         // If density transfer functions are requested in the (default) CLASS format,
@@ -1191,6 +1217,9 @@ int perturb_indices(
           ppt->has_source_theta_dr = _TRUE_;
         if (pba->has_ncdm == _TRUE_)
           ppt->has_source_theta_ncdm = _TRUE_;
+	if (pba->has_NEDE == _TRUE_)
+          ppt->has_source_theta_NEDE = _TRUE_;
+
       }
 
       if (ppt->has_cl_number_count == _TRUE_) {
@@ -1256,11 +1285,14 @@ int perturb_indices(
       class_define_index(ppt->index_tp_delta_dcdm, ppt->has_source_delta_dcdm,index_type,1);
       class_define_index(ppt->index_tp_delta_fld,  ppt->has_source_delta_fld, index_type,1);
       class_define_index(ppt->index_tp_delta_scf,  ppt->has_source_delta_scf, index_type,1);
+      //class_define_index(ppt->index_tp_delta_trigger,  ppt->has_source_delta_trigger, index_type,1); 
       class_define_index(ppt->index_tp_delta_dr,   ppt->has_source_delta_dr,  index_type,1);
       class_define_index(ppt->index_tp_delta_ur,   ppt->has_source_delta_ur,  index_type,1);
+      class_define_index(ppt->index_tp_delta_NEDE,  ppt->has_source_delta_NEDE, index_type,1); 
       class_define_index(ppt->index_tp_delta_idr,  ppt->has_source_delta_idr, index_type,1);
       class_define_index(ppt->index_tp_delta_idm_dr,  ppt->has_source_delta_idm_dr, index_type,1);
       class_define_index(ppt->index_tp_delta_ncdm1,ppt->has_source_delta_ncdm,index_type,pba->N_ncdm);
+     
       class_define_index(ppt->index_tp_theta_m,    ppt->has_source_theta_m,   index_type,1);
       class_define_index(ppt->index_tp_theta_cb,   ppt->has_source_theta_cb,  index_type,1);
       class_define_index(ppt->index_tp_theta_tot,  ppt->has_source_theta_tot, index_type,1);
@@ -1270,8 +1302,10 @@ int perturb_indices(
       class_define_index(ppt->index_tp_theta_dcdm, ppt->has_source_theta_dcdm,index_type,1);
       class_define_index(ppt->index_tp_theta_fld,  ppt->has_source_theta_fld, index_type,1);
       class_define_index(ppt->index_tp_theta_scf,  ppt->has_source_theta_scf, index_type,1);
+      // class_define_index(ppt->index_tp_theta_trigger,  ppt->has_source_theta_trigger, index_type,1);
       class_define_index(ppt->index_tp_theta_dr,   ppt->has_source_theta_dr,  index_type,1);
       class_define_index(ppt->index_tp_theta_ur,   ppt->has_source_theta_ur,  index_type,1);
+      class_define_index(ppt->index_tp_theta_NEDE,  ppt->has_source_theta_NEDE, index_type,1);
       class_define_index(ppt->index_tp_theta_idr,  ppt->has_source_theta_idr, index_type,1);
       class_define_index(ppt->index_tp_theta_idm_dr,  ppt->has_source_theta_idm_dr, index_type,1);
       class_define_index(ppt->index_tp_theta_ncdm1,ppt->has_source_theta_ncdm,index_type,pba->N_ncdm);
@@ -2578,6 +2612,9 @@ int perturb_workspace_init(
     class_define_index(ppw->index_ap_ncdmfa,pba->has_ncdm,index_ap,1);
     class_define_index(ppw->index_ap_tca_idm_dr,pba->has_idm_dr,index_ap,1);
     class_define_index(ppw->index_ap_rsa_idr,pba->has_idr,index_ap,1);
+    class_define_index(ppw->index_ap_CCa,pba->has_NEDE,index_ap,1);
+    class_define_index(ppw->index_ap_sda,pba->has_NEDE,index_ap,1); 
+
 
   }
 
@@ -2606,6 +2643,20 @@ int perturb_workspace_init(
     if (pba->has_ncdm == _TRUE_) {
       ppw->approx[ppw->index_ap_ncdmfa]=(int)ncdmfa_off;
     }
+    
+    /*New EDE: Define different evolution phases*/
+    if (pba->has_NEDE_pert == _TRUE_) {
+      /*CCa_on: NEDE is decribed as a constant without fluctuations.*/
+      /*CCa_off: NEDE is decribed as a fluid with fluctuations.*/
+      ppw->approx[ppw->index_ap_CCa]=(int)CCa_on;
+    }
+
+    if (pba->has_NEDE_pert == _TRUE_) {
+      /*sda_on: NEDE has decayed sufficiently far that we do not need to track its perturbations.*/
+      /*sda_off: NEDE is not yet subdominant and we therefore need to track its perturbations*/
+      ppw->approx[ppw->index_ap_sda]=(int)sda_off;
+    }
+
   }
 
   if (_tensors_) {
@@ -3123,6 +3174,11 @@ int perturb_prepare_k_output(struct background * pba,
       class_store_columntitle(ppt->scalar_titles,"delta_ur",pba->has_ur);
       class_store_columntitle(ppt->scalar_titles,"theta_ur",pba->has_ur);
       class_store_columntitle(ppt->scalar_titles,"shear_ur",pba->has_ur);
+      /* New EDE*/
+      class_store_columntitle(ppt->scalar_titles,"delta_NEDE",pba->has_NEDE_pert);
+      class_store_columntitle(ppt->scalar_titles,"theta_NEDE",pba->has_NEDE_pert);
+      class_store_columntitle(ppt->scalar_titles,"shear_NEDE",pba->has_NEDE_pert);
+
       /* Interacting dark radiation */
       class_store_columntitle(ppt->scalar_titles,"delta_idr",pba->has_idr);
       class_store_columntitle(ppt->scalar_titles,"theta_idr",pba->has_idr);
@@ -3157,10 +3213,16 @@ int perturb_prepare_k_output(struct background * pba,
       /* Scalar field scf */
       class_store_columntitle(ppt->scalar_titles, "delta_scf", pba->has_scf);
       class_store_columntitle(ppt->scalar_titles, "theta_scf", pba->has_scf);
+      /*New EDE: Trigger field*/      
+      class_store_columntitle(ppt->scalar_titles,"delta_trigger",pba->has_NEDE_trigger);
+      class_store_columntitle(ppt->scalar_titles,"theta_trigger",pba->has_NEDE_trigger);
+      
+
       /** Fluid */
       class_store_columntitle(ppt->scalar_titles, "delta_rho_fld", pba->has_fld);
       class_store_columntitle(ppt->scalar_titles, "rho_plus_p_theta_fld", pba->has_fld);
       class_store_columntitle(ppt->scalar_titles, "delta_p_fld", pba->has_fld);
+
 
       ppt->number_of_scalar_titles =
         get_number_of_titles(ppt->scalar_titles);
@@ -3539,6 +3601,13 @@ int perturb_find_approximation_switches(
               fprintf(stdout,"Mode k=%e: will switch on ncdm fluid approximation at tau=%e\n",k,interval_limit[index_switch]);
             }
           }
+	  if (pba->has_NEDE_pert == _TRUE_) {
+	    /*Here we check when the phase transition has occurred.*/
+	    if ((interval_approx[index_switch-1][ppw->index_ap_CCa]==(int)CCa_on) &&
+                (interval_approx[index_switch][ppw->index_ap_CCa]==(int)CCa_off)) {
+              fprintf(stdout,"NEDE mode with k=%e: Initiated at tau=%e\n",k,interval_limit[index_switch]);
+	    }
+	  }
         }
 
         if (_tensors_) {
@@ -3638,6 +3707,13 @@ int perturb_vector_init(
   int l;
   int n_ncdm,index_q,ncdm_l_size;
   double rho_plus_p_ncdm,q,q2,epsilon,a,factor;
+  double amp_rel = 0.; 
+  double delta_rho_trigger;
+  double rho_plus_p_theta_trigger;
+  double delta_trigger,theta_trigger;
+  double a_prime_over_a;
+  double delta_phi_over_phi_prime, sigma_NEDE;
+
 
   /** - allocate a new perturb_vector structure to which ppw-->pv will point at the end of the routine */
 
@@ -3750,6 +3826,30 @@ int perturb_vector_init(
 
     class_define_index(ppv->index_pt_phi_scf,pba->has_scf,index_pt,1); /* scalar field density */
     class_define_index(ppv->index_pt_phi_prime_scf,pba->has_scf,index_pt,1); /* scalar field velocity */
+
+
+ /*Here we allocate memory for the variables to be integrated depending on NEDE phase.*/
+
+    if (pba->has_NEDE_pert == _TRUE_) {
+      /*New EDE: Only track perturbations in trigger field  before decay, afterwards they are irrelevant.  */
+      if ((ppw->approx[ppw->index_ap_CCa] == (int)CCa_on)&&(pba->has_NEDE_trigger == _TRUE_)){
+	/* trigger field density */
+	class_define_index(ppv->index_pt_phi_trigger,pba->has_NEDE_trigger,index_pt,1);
+	/* trigger field velocity */
+	class_define_index(ppv->index_pt_phi_prime_trigger,pba->has_NEDE_trigger,index_pt,1);
+      }
+      /*New EDE: Only track perturbations in NEDE fluid  beforeafter decay and before NEDE is highly subdominant.  */
+      if  ((ppw->approx[ppw->index_ap_CCa] == (int)CCa_off) && (ppw->approx[ppw->index_ap_sda] == (int)sda_off))   {
+	/* NEDE pert density */
+	class_define_index(ppv->index_pt_delta_NEDE,_TRUE_,index_pt,1);
+	/* NEDE pert velocity */
+	class_define_index(ppv->index_pt_theta_NEDE,_TRUE_,index_pt,1);
+      	/* NEDE pert sehar */
+	class_define_index(ppv->index_pt_shear_NEDE,_TRUE_,index_pt,1);
+      }
+    }
+  
+
 
     /* perturbed recombination: the indices are defined once tca is off. */
     if ( (ppt->has_perturbed_recombination == _TRUE_) && (ppw->approx[ppw->index_ap_tca] == (int)tca_off) ){
@@ -4082,8 +4182,26 @@ int perturb_vector_init(
         class_test(ppw->approx[ppw->index_ap_ufa] == (int)ufa_on,
                    ppt->error_message,
                    "scalar initial conditions assume ur fluid approximation turned off");
-
       }
+
+      /*New EDE*/ /*Check that all modes are being initizalized before the transition*/
+      
+      if (pba->has_NEDE_pert == _TRUE_) {
+
+        class_test(ppw->approx[ppw->index_ap_CCa] == (int)CCa_off,
+                   ppt->error_message,
+                   "scalar initial conditions assume that phase transition in NEDE has not yet occurred");
+
+	if(pba->has_NEDE_trigger == _TRUE_){
+	  class_test(ppw->approx[ppw->index_ap_sda] == (int)sda_on,
+		     ppt->error_message,
+		     "The tag sda_on should only be set after the transition");
+	}
+      }
+
+      
+
+
 
       if (pba->has_ncdm == _TRUE_) {
 
@@ -4326,7 +4444,35 @@ int perturb_vector_init(
           }
         }
 
-        /* perturbed recombination */
+	
+	
+	/*New EDE*/
+	/*EDE and trigger perturbations not affectecd by tight coupling approximation, so we just copy the values from the previous integration step*/
+	if (pba->has_NEDE_pert == _TRUE_ ) {
+	  if  ( (ppw->approx[ppw->index_ap_sda] == (int)sda_off) && (ppw->approx[ppw->index_ap_CCa] == (int)CCa_off)){
+	    ppv->y[ppv->index_pt_delta_NEDE] =
+	      ppw->pv->y[ppw->pv->index_pt_delta_NEDE];
+	    
+	    ppv->y[ppv->index_pt_theta_NEDE] =
+	      ppw->pv->y[ppw->pv->index_pt_theta_NEDE];
+	    
+	    ppv->y[ppv->index_pt_shear_NEDE] =
+	      ppw->pv->y[ppw->pv->index_pt_shear_NEDE];
+	  }
+	  if (pba->has_NEDE_trigger == _TRUE_) {
+	    if ((ppw->approx[ppw->index_ap_CCa] == (int)CCa_on) ){
+	      
+	      ppv->y[ppv->index_pt_phi_trigger] =
+		ppw->pv->y[ppw->pv->index_pt_phi_trigger];
+	      
+	      ppv->y[ppv->index_pt_phi_prime_trigger] =
+		ppw->pv->y[ppw->pv->index_pt_phi_prime_trigger];
+	    }
+	  }
+	}
+      
+
+	  /* perturbed recombination */
         /* the initial conditions are set when tca is switched off (current block) */
         if (ppt->has_perturbed_recombination == _TRUE_){
           ppv->y[ppv->index_pt_perturbed_recombination_delta_temp] = 1./3.*ppv->y[ppw->pv->index_pt_delta_b];
@@ -4394,6 +4540,31 @@ int perturb_vector_init(
             }
           }
         }
+
+		/*New EDE*/
+	/*EDE and trigger perturbations not affectecd by radiation streamin approximation, so we just copy the values from the previous integration step*/
+	if (pba->has_NEDE_pert == _TRUE_ ) {
+	  if  ( (ppw->approx[ppw->index_ap_sda] == (int)sda_off) && (ppw->approx[ppw->index_ap_CCa] == (int)CCa_off)){
+	    ppv->y[ppv->index_pt_delta_NEDE] =
+	      ppw->pv->y[ppw->pv->index_pt_delta_NEDE];
+	    
+	    ppv->y[ppv->index_pt_theta_NEDE] =
+	      ppw->pv->y[ppw->pv->index_pt_theta_NEDE];
+	    
+	    ppv->y[ppv->index_pt_shear_NEDE] =
+	      ppw->pv->y[ppw->pv->index_pt_shear_NEDE];
+	  }
+	  if (pba->has_NEDE_trigger == _TRUE_) {
+	    if ((ppw->approx[ppw->index_ap_CCa] == (int)CCa_on) ){
+	      
+	      ppv->y[ppv->index_pt_phi_trigger] =
+		ppw->pv->y[ppw->pv->index_pt_phi_trigger];
+	      
+	      ppv->y[ppv->index_pt_phi_prime_trigger] =
+		ppw->pv->y[ppw->pv->index_pt_phi_prime_trigger];
+	    }
+	  }
+	}
       }
 
       /* -- case of switching on ur fluid
@@ -4504,6 +4675,30 @@ int perturb_vector_init(
               }
             }
           }
+	  /*New EDE*/
+	  /*EDE and trigger perturbations not affectecd by ur fluid approximation, so we just copy the values from the previous integration step*/
+	  if (pba->has_NEDE_pert == _TRUE_ ) {
+	    if  ( (ppw->approx[ppw->index_ap_sda] == (int)sda_off) && (ppw->approx[ppw->index_ap_CCa] == (int)CCa_off)){
+	      ppv->y[ppv->index_pt_delta_NEDE] =
+		ppw->pv->y[ppw->pv->index_pt_delta_NEDE];
+	    
+	      ppv->y[ppv->index_pt_theta_NEDE] =
+		ppw->pv->y[ppw->pv->index_pt_theta_NEDE];
+	    
+	      ppv->y[ppv->index_pt_shear_NEDE] =
+		ppw->pv->y[ppw->pv->index_pt_shear_NEDE];
+	    }
+	    if (pba->has_NEDE_trigger == _TRUE_) {
+	      if ((ppw->approx[ppw->index_ap_CCa] == (int)CCa_on) ){
+	      
+		ppv->y[ppv->index_pt_phi_trigger] =
+		  ppw->pv->y[ppw->pv->index_pt_phi_trigger];
+	      
+		ppv->y[ppv->index_pt_phi_prime_trigger] =
+		  ppw->pv->y[ppw->pv->index_pt_phi_prime_trigger];
+	      }
+	    }
+	  }
         }
       }
 
@@ -4598,7 +4793,30 @@ int perturb_vector_init(
               }
             }
           }
-
+	  /*New EDE*/
+	  /*EDE and trigger perturbations not affectecd by this approximation, so we just copy the values from the previous integration step*/
+	  if (pba->has_NEDE_pert == _TRUE_ ) {
+	    if  ( (ppw->approx[ppw->index_ap_sda] == (int)sda_off) && (ppw->approx[ppw->index_ap_CCa] == (int)CCa_off)){
+	      ppv->y[ppv->index_pt_delta_NEDE] =
+		ppw->pv->y[ppw->pv->index_pt_delta_NEDE];
+	    
+	      ppv->y[ppv->index_pt_theta_NEDE] =
+		ppw->pv->y[ppw->pv->index_pt_theta_NEDE];
+	    
+	      ppv->y[ppv->index_pt_shear_NEDE] =
+		ppw->pv->y[ppw->pv->index_pt_shear_NEDE];
+	    }
+	    if (pba->has_NEDE_trigger == _TRUE_) {
+	      if ((ppw->approx[ppw->index_ap_CCa] == (int)CCa_on) ){
+	      
+		ppv->y[ppv->index_pt_phi_trigger] =
+		  ppw->pv->y[ppw->pv->index_pt_phi_trigger];
+	      
+		ppv->y[ppv->index_pt_phi_prime_trigger] =
+		  ppw->pv->y[ppw->pv->index_pt_phi_prime_trigger];
+	      }
+	    }
+	  }
         }
       }
 
@@ -4710,6 +4928,30 @@ int perturb_vector_init(
               }
             }
           }
+	  	  /*New EDE*/
+	  /*EDE and trigger perturbations not affectecd by ur fluid approximation, so we just copy the values from the previous integration step*/
+	  if (pba->has_NEDE_pert == _TRUE_ ) {
+	    if  ( (ppw->approx[ppw->index_ap_sda] == (int)sda_off) && (ppw->approx[ppw->index_ap_CCa] == (int)CCa_off)){
+	      ppv->y[ppv->index_pt_delta_NEDE] =
+		ppw->pv->y[ppw->pv->index_pt_delta_NEDE];
+	    
+	      ppv->y[ppv->index_pt_theta_NEDE] =
+		ppw->pv->y[ppw->pv->index_pt_theta_NEDE];
+	    
+	      ppv->y[ppv->index_pt_shear_NEDE] =
+		ppw->pv->y[ppw->pv->index_pt_shear_NEDE];
+	    }
+	    if (pba->has_NEDE_trigger == _TRUE_) {
+	      if ((ppw->approx[ppw->index_ap_CCa] == (int)CCa_on) ){
+	      
+		ppv->y[ppv->index_pt_phi_trigger] =
+		  ppw->pv->y[ppw->pv->index_pt_phi_trigger];
+	      
+		ppv->y[ppv->index_pt_phi_prime_trigger] =
+		  ppw->pv->y[ppw->pv->index_pt_phi_prime_trigger];
+	      }
+	    }
+	  }
         }
       }
 
@@ -4794,6 +5036,31 @@ int perturb_vector_init(
             }
           }
 
+	  	  /*New EDE*/
+	  /*EDE and trigger perturbations not affectecd by ur fluid approximation, so we just copy the values from the previous integration step*/
+	  if (pba->has_NEDE_pert == _TRUE_ ) {
+	    if  ( (ppw->approx[ppw->index_ap_sda] == (int)sda_off) && (ppw->approx[ppw->index_ap_CCa] == (int)CCa_off)){
+	      ppv->y[ppv->index_pt_delta_NEDE] =
+		ppw->pv->y[ppw->pv->index_pt_delta_NEDE];
+	    
+	      ppv->y[ppv->index_pt_theta_NEDE] =
+		ppw->pv->y[ppw->pv->index_pt_theta_NEDE];
+	    
+	      ppv->y[ppv->index_pt_shear_NEDE] =
+		ppw->pv->y[ppw->pv->index_pt_shear_NEDE];
+	    }
+	    if (pba->has_NEDE_trigger == _TRUE_) {
+	      if ((ppw->approx[ppw->index_ap_CCa] == (int)CCa_on) ){
+	      
+		ppv->y[ppv->index_pt_phi_trigger] =
+		  ppw->pv->y[ppw->pv->index_pt_phi_trigger];
+	      
+		ppv->y[ppv->index_pt_phi_prime_trigger] =
+		  ppw->pv->y[ppw->pv->index_pt_phi_prime_trigger];
+	      }
+	    }
+	  }
+
           if (pba->has_idr == _TRUE_){
             if (ppw->approx[ppw->index_ap_rsa_idr] == (int)rsa_idr_off){
 
@@ -4856,6 +5123,292 @@ int perturb_vector_init(
             ppv->y[ppv->index_pt_psi0_ncdm1+ncdm_l_size*n_ncdm] *=factor/ppw->pvecback[pba->index_bg_rho_ncdm1+n_ncdm];
             ppv->y[ppv->index_pt_psi0_ncdm1+ncdm_l_size*n_ncdm+1] *=k*factor/rho_plus_p_ncdm;
             ppv->y[ppv->index_pt_psi0_ncdm1+ncdm_l_size*n_ncdm+2] *=2.0/3.0*factor/rho_plus_p_ncdm;
+          }
+        }
+      }
+      /*New EDE*/
+      /*Here we sewt the initial conditions for all our NEDE fluid modes / note that all other sectors are unaffected */
+      if (pba->has_NEDE_pert == _TRUE_) {
+	if ((pa_old[ppw->index_ap_CCa] == (int)CCa_on) && (ppw->approx[ppw->index_ap_CCa] == (int)CCa_off)) {
+
+          if (ppt->perturbations_verbose>2)
+	    fprintf(stdout,"Mode k=%e: initialize EDE mode at tau=%e\n",k,tau);
+
+          if (ppw->approx[ppw->index_ap_rsa] == (int)rsa_off) {
+
+            ppv->y[ppv->index_pt_delta_g] =
+              ppw->pv->y[ppw->pv->index_pt_delta_g];
+
+            ppv->y[ppv->index_pt_theta_g] =
+              ppw->pv->y[ppw->pv->index_pt_theta_g];
+          }
+
+          if ((ppw->approx[ppw->index_ap_tca] == (int)tca_off) && (ppw->approx[ppw->index_ap_rsa] == (int)rsa_off)) {
+
+            ppv->y[ppv->index_pt_shear_g] =
+              ppw->pv->y[ppw->pv->index_pt_shear_g];
+
+            ppv->y[ppv->index_pt_l3_g] =
+              ppw->pv->y[ppw->pv->index_pt_l3_g];
+
+            for (l = 4; l <= ppw->pv->l_max_g; l++) {
+
+              ppv->y[ppv->index_pt_delta_g+l] =
+                ppw->pv->y[ppw->pv->index_pt_delta_g+l];
+            }
+
+            ppv->y[ppv->index_pt_pol0_g] =
+              ppw->pv->y[ppw->pv->index_pt_pol0_g];
+
+            ppv->y[ppv->index_pt_pol1_g] =
+              ppw->pv->y[ppw->pv->index_pt_pol1_g];
+
+            ppv->y[ppv->index_pt_pol2_g] =
+              ppw->pv->y[ppw->pv->index_pt_pol2_g];
+
+            ppv->y[ppv->index_pt_pol3_g] =
+              ppw->pv->y[ppw->pv->index_pt_pol3_g];
+
+            for (l = 4; l <= ppw->pv->l_max_pol_g; l++) {
+
+              ppv->y[ppv->index_pt_pol0_g+l] =
+                ppw->pv->y[ppw->pv->index_pt_pol0_g+l];
+            }
+          }
+
+	  if (pba->has_ur == _TRUE_) {
+
+            if (ppw->approx[ppw->index_ap_rsa] == (int)rsa_off) {
+
+
+              ppv->y[ppv->index_pt_delta_ur] =
+                ppw->pv->y[ppw->pv->index_pt_delta_ur];
+
+              ppv->y[ppv->index_pt_theta_ur] =
+                ppw->pv->y[ppw->pv->index_pt_theta_ur];
+
+              ppv->y[ppv->index_pt_shear_ur] =
+                ppw->pv->y[ppw->pv->index_pt_shear_ur];
+
+              if (ppw->approx[ppw->index_ap_ufa] == (int)ufa_off) {
+
+                ppv->y[ppv->index_pt_l3_ur] =
+                  ppw->pv->y[ppw->pv->index_pt_l3_ur];
+
+                for (l=4; l <= ppv->l_max_ur; l++)
+                  ppv->y[ppv->index_pt_delta_ur+l] =
+                    ppw->pv->y[ppw->pv->index_pt_delta_ur+l];
+              }
+	    }
+          }
+
+	  
+          if (pba->has_idr == _TRUE_){
+
+            if (ppw->approx[ppw->index_ap_rsa_idr]==(int)rsa_idr_off){
+
+              ppv->y[ppv->index_pt_delta_idr] =
+                ppw->pv->y[ppw->pv->index_pt_delta_idr];
+
+              ppv->y[ppv->index_pt_theta_idr] =
+                ppw->pv->y[ppw->pv->index_pt_theta_idr];
+
+              if (ppt->idr_nature == idr_free_streaming){
+
+                if ((pba->has_idm_dr == _FALSE_)||((pba->has_idm_dr == _TRUE_)&&(ppw->approx[ppw->index_ap_tca_idm_dr] == (int)tca_idm_dr_off))){
+
+                  ppv->y[ppv->index_pt_shear_idr] =
+                    ppw->pv->y[ppw->pv->index_pt_shear_idr];
+
+                  ppv->y[ppv->index_pt_l3_idr] =
+                    ppw->pv->y[ppw->pv->index_pt_l3_idr];
+
+                  for (l=4; l <= ppv->l_max_idr; l++)
+                    ppv->y[ppv->index_pt_delta_idr+l] =
+                      ppw->pv->y[ppw->pv->index_pt_delta_idr+l];
+                }
+              }
+            }
+          }
+	  
+	  /*New EDE*/ /*important*/
+	  /*here we set the matching conditions for EDE perturbations: before transition perturbations are zero and after transition they start with value set by fluctuation in transition surface / see Israel's equations in our paper*/
+
+	  /*Nothing needs to be done if NEDE is exrremly subdominant*/
+	  if (ppw->approx[ppw->index_ap_sda] == (int)sda_off){
+
+	    a = ppw->pvecback[pba->index_bg_a];
+	    a_prime_over_a = ppw->pvecback[pba->index_bg_H]*a;
+	    if (pba->has_NEDE_trigger == _TRUE_) 
+	      delta_phi_over_phi_prime = ppw->pv->y[ppw->pv->index_pt_phi_trigger] / (ppw->pvecback[pba->index_bg_phi_prime_trigger] );
+	    else
+	      delta_phi_over_phi_prime = 0; //In absence of scalar field we use trivial junction conditions as there is no better choice available.  
+	  
+  	    if (pba->Junction_tag == 0){
+	      amp_rel = 0.0;
+	      sigma_NEDE = 0.0;
+	    }
+	    else if(pba->Junction_tag == 1){
+	      amp_rel = 1.;
+	      sigma_NEDE = 0.0;
+	    }
+
+	  //printf("k: %f, aH: %f, h': %f, eta': %f, alpha1: %f, alpha2: %f \n",k,a_prime_over_a ,ppw->pvecmetric[ppw->index_mt_h_prime],ppw->pvecmetric[ppw->index_mt_eta_prime],(ppw->pvecmetric[ppw->index_mt_h_prime] + 6.0*ppw->pvecmetric[ppw->index_mt_eta_prime])/(2.0 *k*k),ppw->pvecmetric[ppw->index_mt_alpha]);
+	  
+	  	    
+	    ppv->y[ppv->index_pt_delta_NEDE] =  - (3. + pba->three_eos_NEDE) * amp_rel * a_prime_over_a * delta_phi_over_phi_prime;  // follows from junction conditions
+
+	    
+	    ppv->y[ppv->index_pt_theta_NEDE] = - 1./(3. + pba->three_eos_NEDE) * k * k / a_prime_over_a * ppv->y[ppv->index_pt_delta_NEDE]; // follows from junction conditions
+
+
+	  // if (k<0.04 && k>0.03)
+	  //printf("v1: %f, v2: %f, v3: %E",k,ppw->pv->y[ppw->pv->index_pt_phi_scf], ppw->pvecback[pba->index_bg_phi_prime_scf]);
+		  
+	    // printf("z: %f and k: %f and delta_NEDE: %f and theta_EDE: %f \n",1./a-1,k,ppv->y[ppv->index_pt_delta_NEDE],ppv->y[ppv->index_pt_theta_EDE]);
+
+	    ppv->y[ppv->index_pt_shear_NEDE] =  sigma_NEDE;
+	    
+	    //the higher multipoles below we have to set to zero as they are not fixed by the junction conditions. Note that this is a gauge invariant choice.	
+	    
+	  }
+
+	  /* New EDE */ /*Trigger field evolution stops at transition, no values need to be copied.*/
+	  
+	  
+	  
+          if (pba->has_ncdm == _TRUE_) {
+            index_pt = 0;
+            for(n_ncdm = 0; n_ncdm < ppv->N_ncdm; n_ncdm++){
+              for(index_q=0; index_q < ppv->q_size_ncdm[n_ncdm]; index_q++){
+                for(l=0; l<=ppv->l_max_ncdm[n_ncdm]; l++){
+                  /* This is correct even when ncdmfa == off, since ppv->l_max_ncdm and
+                      ppv->q_size_ncdm is updated.*/
+                  ppv->y[ppv->index_pt_psi0_ncdm1+index_pt] =
+                    ppw->pv->y[ppw->pv->index_pt_psi0_ncdm1+index_pt];
+                  index_pt++;
+                }
+              }
+            }
+          }
+        }
+	/*New EDE: Here we stop tracking the evolution of NEDE perturbations as the NEDE fluid has becomes sufficiently suppressed.*/
+	if ((pa_old[ppw->index_ap_sda] == (int)sda_off) && (ppw->approx[ppw->index_ap_sda] == (int)sda_on)) {
+
+          if (ppt->perturbations_verbose>2)
+            fprintf(stdout,"Mode k=%e: switch off EDE CC approximation at tau=%e\n",k,tau);
+
+          if (ppw->approx[ppw->index_ap_rsa] == (int)rsa_off) {
+
+            ppv->y[ppv->index_pt_delta_g] =
+              ppw->pv->y[ppw->pv->index_pt_delta_g];
+
+            ppv->y[ppv->index_pt_theta_g] =
+              ppw->pv->y[ppw->pv->index_pt_theta_g];
+          }
+          if ((ppw->approx[ppw->index_ap_tca] == (int)tca_off) && (ppw->approx[ppw->index_ap_rsa] == (int)rsa_off)) {
+
+            ppv->y[ppv->index_pt_shear_g] =
+              ppw->pv->y[ppw->pv->index_pt_shear_g];
+
+            ppv->y[ppv->index_pt_l3_g] =
+              ppw->pv->y[ppw->pv->index_pt_l3_g];
+
+            for (l = 4; l <= ppw->pv->l_max_g; l++) {
+
+              ppv->y[ppv->index_pt_delta_g+l] =
+                ppw->pv->y[ppw->pv->index_pt_delta_g+l];
+            }
+
+            ppv->y[ppv->index_pt_pol0_g] =
+              ppw->pv->y[ppw->pv->index_pt_pol0_g];
+
+            ppv->y[ppv->index_pt_pol1_g] =
+              ppw->pv->y[ppw->pv->index_pt_pol1_g];
+
+            ppv->y[ppv->index_pt_pol2_g] =
+              ppw->pv->y[ppw->pv->index_pt_pol2_g];
+
+            ppv->y[ppv->index_pt_pol3_g] =
+              ppw->pv->y[ppw->pv->index_pt_pol3_g];
+
+            for (l = 4; l <= ppw->pv->l_max_pol_g; l++) {
+
+              ppv->y[ppv->index_pt_pol0_g+l] =
+                ppw->pv->y[ppw->pv->index_pt_pol0_g+l];
+            }
+
+          }
+
+	  if (pba->has_ur == _TRUE_) {
+
+            if (ppw->approx[ppw->index_ap_rsa] == (int)rsa_off) {
+
+
+              ppv->y[ppv->index_pt_delta_ur] =
+                ppw->pv->y[ppw->pv->index_pt_delta_ur];
+
+              ppv->y[ppv->index_pt_theta_ur] =
+                ppw->pv->y[ppw->pv->index_pt_theta_ur];
+
+              ppv->y[ppv->index_pt_shear_ur] =
+                ppw->pv->y[ppw->pv->index_pt_shear_ur];
+
+              if (ppw->approx[ppw->index_ap_ufa] == (int)ufa_off) {
+
+                ppv->y[ppv->index_pt_l3_ur] =
+                  ppw->pv->y[ppw->pv->index_pt_l3_ur];
+
+                for (l=4; l <= ppv->l_max_ur; l++)
+                  ppv->y[ppv->index_pt_delta_ur+l] =
+                    ppw->pv->y[ppw->pv->index_pt_delta_ur+l];
+              }
+            }
+          }
+
+	  
+          if (pba->has_idr == _TRUE_){
+
+            if (ppw->approx[ppw->index_ap_rsa_idr]==(int)rsa_idr_off){
+
+              ppv->y[ppv->index_pt_delta_idr] =
+                ppw->pv->y[ppw->pv->index_pt_delta_idr];
+
+              ppv->y[ppv->index_pt_theta_idr] =
+                ppw->pv->y[ppw->pv->index_pt_theta_idr];
+
+              if (ppt->idr_nature == idr_free_streaming){
+
+                if ((pba->has_idm_dr == _FALSE_)||((pba->has_idm_dr == _TRUE_)&&(ppw->approx[ppw->index_ap_tca_idm_dr] == (int)tca_idm_dr_off))){
+
+                  ppv->y[ppv->index_pt_shear_idr] =
+                    ppw->pv->y[ppw->pv->index_pt_shear_idr];
+
+                  ppv->y[ppv->index_pt_l3_idr] =
+                    ppw->pv->y[ppw->pv->index_pt_l3_idr];
+
+                  for (l=4; l <= ppv->l_max_idr; l++)
+                    ppv->y[ppv->index_pt_delta_idr+l] =
+                      ppw->pv->y[ppw->pv->index_pt_delta_idr+l];
+                }
+              }
+            }
+          }
+	  
+  
+          if (pba->has_ncdm == _TRUE_) {
+            index_pt = 0;
+            for(n_ncdm = 0; n_ncdm < ppv->N_ncdm; n_ncdm++){
+              for(index_q=0; index_q < ppv->q_size_ncdm[n_ncdm]; index_q++){
+                for(l=0; l<=ppv->l_max_ncdm[n_ncdm]; l++){
+                  /* This is correct even when ncdmfa == off, since ppv->l_max_ncdm and
++                      ppv->q_size_ncdm is updated.*/
+                  ppv->y[ppv->index_pt_psi0_ncdm1+index_pt] =
+                    ppw->pv->y[ppw->pv->index_pt_psi0_ncdm1+index_pt];
+                  index_pt++;
+                }
+              }
+            }
           }
         }
       }
@@ -5146,6 +5699,10 @@ int perturb_initial_conditions(struct precision * ppr,
       rho_nu += ppw->pvecback[pba->index_bg_rho_ur];
     }
 
+    /*New EDE*/
+    /*NEDE is irrelevant at the time where perturbations are initialised.*/
+
+
     if (pba->has_idr == _TRUE_) {
       rho_r += ppw->pvecback[pba->index_bg_rho_idr];
       rho_nu += ppw->pvecback[pba->index_bg_rho_idr];
@@ -5278,6 +5835,17 @@ int perturb_initial_conditions(struct precision * ppr,
         /* delta_fld expression * rho_scf with the w = 1/3, c_s = 1
            a*a/ppw->pvecback[pba->index_bg_phi_prime_scf]*( - ktau_two/4.*(1.+1./3.)*(4.-3.*1.)/(4.-6.*(1/3.)+3.*1.)*ppw->pvecback[pba->index_bg_rho_scf] - ppw->pvecback[pba->index_bg_dV_scf]*ppw->pv->y[ppw->pv->index_pt_phi_scf])* ppr->curvature_ini * s2_squared; */
       }
+
+      /*New EDE: Here we set adiabatic intial conditions for the scalar*/
+      if ( (pba->has_NEDE_pert == _TRUE_) && (pba->has_NEDE_trigger == _TRUE_)){
+	if ( (ppw->approx[ppw->index_ap_CCa] == (int)CCa_on)) {
+
+          ppw->pv->y[ppw->pv->index_pt_phi_trigger] =  - 1./140. * pba->phi_ini_trigger * ppw->pv->y[ppw->pv->index_pt_delta_g] * pow(pba->NEDE_trigger_mass / ppw->pvecback[pba->index_bg_H],2) ;
+ 
+	  ppw->pv->y[ppw->pv->index_pt_phi_prime_trigger] =  - 3/70 * pba->phi_ini_trigger * ppw->pv->y[ppw->pv->index_pt_delta_g]*pow(pba->NEDE_trigger_mass, 2) * a / ppw->pvecback[pba->index_bg_H] ;
+	}
+      }
+
 
       /* all relativistic relics: ur, early ncdm, dr */
 
@@ -5535,6 +6103,23 @@ int perturb_initial_conditions(struct precision * ppr,
            +ppw->pvecback[pba->index_bg_phi_prime_scf]*alpha_prime);
       }
 
+      /*New EDE: Convert inital conditions to Newtonian gauge / danger: we never have tested this part as we only use synchronous gauge*/
+      if (pba->has_NEDE_pert == _TRUE_) {
+	
+	/* New EDE: trigger field like scf above */
+	if ((pba->has_NEDE_trigger == _TRUE_) && (ppw->approx[ppw->index_ap_CCa] == (int)CCa_on)) {
+	  alpha_prime = 0.0;
+	  /* - 2. * a_prime_over_a * alpha + eta
+	     - 4.5 * (a2/k2) * ppw->rho_plus_p_shear; */
+
+	  ppw->pv->y[ppw->pv->index_pt_phi_trigger] += alpha*ppw->pvecback[pba->index_bg_phi_prime_trigger];
+	  ppw->pv->y[ppw->pv->index_pt_phi_prime_trigger] +=
+	    (-2.*a_prime_over_a*alpha*ppw->pvecback[pba->index_bg_phi_prime_trigger]
+	     -a*a* dV_trigger(pba,ppw->pvecback[pba->index_bg_phi_trigger])*alpha
+	     +ppw->pvecback[pba->index_bg_phi_prime_trigger]*alpha_prime);
+	}
+      }
+      
       if ((pba->has_ur == _TRUE_) || (pba->has_ncdm == _TRUE_) || (pba->has_dr == _TRUE_)  || (pba->has_idr == _TRUE_)) {
 
         delta_ur -= 4.*a_prime_over_a*alpha;
@@ -5919,6 +6504,28 @@ int perturb_approximations(
     else {
       ppw->approx[ppw->index_ap_rsa] = (int)rsa_off;
     }
+
+
+    /*New EDE*/
+    /*define NEDE phases*/
+    if (pba->has_NEDE_pert == _TRUE_){
+      /*before transition CCa_on*/
+      if (1./ppw->pvecback[pba->index_bg_a]-1. > pba->z_decay) {
+	ppw->approx[ppw->index_ap_CCa] = (int)CCa_on;
+      }
+      /*after transition CCa_off*/
+      else {
+	ppw->approx[ppw->index_ap_CCa] = (int)CCa_off;
+      }
+      /*When the NEDE fluid becomes highly subdominant set sda_on*/
+      if ((1./ppw->pvecback[pba->index_bg_a]-1. < pba->z_decay*0.9) && (ppw->pvecback[pba->index_bg_rho_NEDE]/pow(ppw->pvecback[pba->index_bg_H],2)< ppr->sub_dom_cond )) {
+	ppw->approx[ppw->index_ap_sda] = (int)sda_on;
+      }
+      else {
+	ppw->approx[ppw->index_ap_sda] = (int)sda_off;
+      }
+    }
+
 
     /* interacting dark radiation free streaming approximation*/
     if (pba->has_idr == _TRUE_){
@@ -6487,6 +7094,11 @@ int perturb_total_stress_energy(
   double X, Y, Z, X_prime, Y_prime, Z_prime;
   double Gamma_fld, S, S_prime, theta_t, theta_t_prime, rho_plus_p_theta_fld_prime;
   double delta_p_b_over_rho_b;
+  /* Variables used for New EDE*/
+  double delta_NEDE=0.;
+  double theta_NEDE=0.;
+  double shear_NEDE=0.;
+  double delta_rho_trigger, delta_p_trigger;
 
   /** - wavenumber and scale factor related quantities */
 
@@ -6560,14 +7172,30 @@ int perturb_total_stress_energy(
       }
 
       else {
-
         delta_ur = 0.; /* actual free streaming approximation imposed after evaluation of 1st einstein equation */
         theta_ur = 0.; /* actual free streaming approximation imposed after evaluation of 1st einstein equation */
         shear_ur = 0.; /* shear always neglected in free streaming approximation */
+      }
+    }
 
+    /*New EDE*/
+    /*Here contributions to EMT are collected*/
+    if (pba->has_NEDE_pert == _TRUE_) {
+
+      if ((ppw->approx[ppw->index_ap_sda] == (int)sda_off) && (ppw->approx[ppw->index_ap_CCa] == (int)CCa_off)) {
+
+        delta_NEDE = y[ppw->pv->index_pt_delta_NEDE];
+        theta_NEDE = y[ppw->pv->index_pt_theta_NEDE];
+        shear_NEDE = y[ppw->pv->index_pt_shear_NEDE];
+      }
+      else {
+        delta_NEDE = 0.;
+        theta_NEDE = 0.;
+        shear_NEDE = 0.;
       }
 
     }
+
 
     /** - ---> (a.3.) baryon pressure perturbation */
 
@@ -6804,6 +7432,66 @@ int perturb_total_stress_energy(
       }
     }
 
+
+    /*New EDE*/
+    /*Here the NEDE contribution to the perturbed EMT is calculated. Note that we excluded the CC phase as there are no contributions in that case. This part is important as it describes the feedback of the EDE pert. into the gravitational sector.*/
+    if (pba->has_NEDE_pert == _TRUE_){
+      if ((ppw->approx[ppw->index_ap_CCa] == (int)CCa_off) && (ppw->approx[ppw->index_ap_sda] == (int)sda_off)) {
+	ppw->delta_rho = ppw->delta_rho + ppw->pvecback[pba->index_bg_rho_NEDE]*delta_NEDE;
+      
+	ppw->rho_plus_p_theta = ppw->rho_plus_p_theta + (1.+pba->three_eos_NEDE/3.)*ppw->pvecback[pba->index_bg_rho_NEDE]*theta_NEDE; 
+
+	ppw->rho_plus_p_shear = ppw->rho_plus_p_shear + (1.+pba->three_eos_NEDE/3.)*ppw->pvecback[pba->index_bg_rho_NEDE]*shear_NEDE; 
+ 
+	ppw->delta_p += ppt->three_ceff2_NEDE/3. * ppw->pvecback[pba->index_bg_rho_NEDE]*delta_NEDE + (ppt->three_ceff2_NEDE/3. - pba->three_eos_NEDE / 3.)*(3.*a_prime_over_a* ((1.+pba->three_eos_NEDE/3.)*ppw->pvecback[pba->index_bg_rho_NEDE]*theta_NEDE)/k/k);
+    
+      
+	/* This part is implemented overly correct as first case cannot happen*/
+	if ( 1. / a - 1.  > pba->z_decay) {
+	  ppw->rho_plus_p_tot += 0.0;
+	}
+	else {
+	  ppw->rho_plus_p_tot += (1. + pba->three_eos_NEDE/3.) * ppw->pvecback[pba->index_bg_rho_NEDE];
+	}
+      }
+   
+      /*Triger contribution / like scalar field below*/
+      if ((pba->has_NEDE_trigger == _TRUE_) && (ppw->approx[ppw->index_ap_CCa] == (int)CCa_on)) {
+
+	if (ppt->gauge == synchronous){
+	  delta_rho_trigger =  1./3.*
+	    (1./a2*ppw->pvecback[pba->index_bg_phi_prime_trigger]*y[ppw->pv->index_pt_phi_prime_trigger]
+	     + ppw->pvecback[pba->index_bg_dV_trigger]*y[ppw->pv->index_pt_phi_trigger]);
+	  delta_p_trigger = 1./3.*
+	    (1./a2*ppw->pvecback[pba->index_bg_phi_prime_trigger]*y[ppw->pv->index_pt_phi_prime_trigger]
+	     - ppw->pvecback[pba->index_bg_dV_trigger]*y[ppw->pv->index_pt_phi_trigger]);
+	}
+	else{
+	  /* equation for psi */
+	  psi = y[ppw->pv->index_pt_phi] - 4.5 * (a2/k/k) * ppw->rho_plus_p_shear;
+	
+	  delta_rho_trigger =  1./3.*
+	    (1./a2*ppw->pvecback[pba->index_bg_phi_prime_trigger]*y[ppw->pv->index_pt_phi_prime_trigger]
+	     + ppw->pvecback[pba->index_bg_dV_trigger]*y[ppw->pv->index_pt_phi_trigger]
+	     - 1./a2*pow(ppw->pvecback[pba->index_bg_phi_prime_trigger],2)*psi);
+	  delta_p_trigger =  1./3.*
+	    (1./a2*ppw->pvecback[pba->index_bg_phi_prime_trigger]*y[ppw->pv->index_pt_phi_prime_trigger]
+	     - ppw->pvecback[pba->index_bg_dV_trigger]*y[ppw->pv->index_pt_phi_trigger]
+	     - 1./a2*pow(ppw->pvecback[pba->index_bg_phi_prime_trigger],2)*psi);
+	}
+
+	ppw->delta_rho += delta_rho_trigger;
+      
+	ppw->rho_plus_p_theta +=  1./3.*
+	  k*k/a2*ppw->pvecback[pba->index_bg_phi_prime_trigger]*y[ppw->pv->index_pt_phi_trigger];
+      
+	ppw->delta_p += delta_p_trigger;
+      
+	ppw->rho_plus_p_tot += ppw->pvecback[pba->index_bg_rho_trigger]+ppw->pvecback[pba->index_bg_p_trigger];
+      }
+    }
+  
+    
     /* scalar field contribution.
        In Newtonian gauge, delta_scf depends on the metric perturbation psi which is inferred
        from rho_plus_p_shear. So the contribution from the scalar field must be below all
@@ -6844,6 +7532,7 @@ int perturb_total_stress_energy(
 
     }
 
+    
     /* add your extra species here */
 
     /* fluid contribution */
@@ -7495,6 +8184,17 @@ int perturb_sources(
           + 4.*a_prime_over_a*theta_over_k2; // N-body gauge correction
     }
 
+    /* New EDE */
+    /*This part is relevant if we calculate matter transfer function for ndividual components*/
+    if (ppt->has_source_delta_NEDE == _TRUE_) {
+      if ((ppw->approx[ppw->index_ap_sda] == (int)sda_off) &&(ppw->approx[ppw->index_ap_CCa]==(int)CCa_off))
+        _set_source_(ppt->index_tp_delta_NEDE) = y[ppw->pv->index_pt_delta_NEDE];
+      else
+	_set_source_(ppt->index_tp_delta_NEDE) = 0.0;
+    }
+    
+ 
+
     /* delta_idr */
     if (ppt->has_source_delta_idr == _TRUE_) {
       if (ppw->approx[ppw->index_ap_rsa_idr]==(int)rsa_idr_off)
@@ -7613,6 +8313,18 @@ int perturb_sources(
         _set_source_(ppt->index_tp_theta_ur) = ppw->rsa_theta_ur
           + theta_shift; // N-body gauge correction
     }
+
+    /*New EDE*/
+    /*same for theta*/
+    if (ppt->has_source_theta_NEDE == _TRUE_) {
+      if ((ppw->approx[ppw->index_ap_sda]==(int)sda_off)&&(ppw->approx[ppw->index_ap_CCa]==(int)CCa_off))
+        _set_source_(ppt->index_tp_theta_NEDE) = y[ppw->pv->index_pt_theta_NEDE];
+      else
+	_set_source_(ppt->index_tp_theta_NEDE) = 0.0;
+    }
+
+    
+
 
     /* theta_idr */
     if (ppt->has_source_theta_idr == _TRUE_) {
@@ -7748,7 +8460,11 @@ int perturb_print_variables(double tau,
   int idx,index_q, storeidx;
   double *dataptr;
 
-
+  /*variables for New EDE*/
+  double delta_NEDE=0.,theta_NEDE=0.,shear_NEDE=0.;
+  double delta_rho_trigger=0., rho_plus_p_theta_trigger=0.;
+  double delta_trigger=0., theta_trigger=0.;
+  
   /** - rename structure fields (just to avoid heavy notations) */
 
   pppaw = parameters_and_workspace;
@@ -7867,6 +8583,46 @@ int perturb_print_variables(double tau,
         shear_ur = 0.;
       }
     }
+
+    
+    /*New EDE*/
+    /* Here we infer the perturbations for different approximations in order to print them in a file*/
+    if (pba->has_NEDE_pert == _TRUE_) {
+      if ((ppw->approx[ppw->index_ap_sda]==(int)sda_off)&&(ppw->approx[ppw->index_ap_CCa]==(int)CCa_off)) {
+	delta_NEDE = y[ppw->pv->index_pt_delta_NEDE];
+	theta_NEDE = y[ppw->pv->index_pt_theta_NEDE];
+	shear_NEDE = y[ppw->pv->index_pt_shear_NEDE];
+      }
+      else {
+	delta_NEDE = 0.;
+	theta_NEDE = 0.;
+	shear_NEDE = 0.;
+      }
+      if (pba->has_NEDE_trigger == _TRUE_) {
+	
+	if ( (ppw->approx[ppw->index_ap_CCa] == (int)CCa_on)){
+	  if (ppt->gauge == synchronous){
+	    delta_rho_trigger =  1./3.*
+	      (1./a2*ppw->pvecback[pba->index_bg_phi_prime_trigger]*y[ppw->pv->index_pt_phi_prime_trigger]
+	       + ppw->pvecback[pba->index_bg_dV_trigger]*y[ppw->pv->index_pt_phi_trigger]);
+	  }
+	  else{
+	    delta_rho_trigger =  1./3.*
+	      (1./a2*ppw->pvecback[pba->index_bg_phi_prime_trigger]*y[ppw->pv->index_pt_phi_prime_trigger]
+	       + ppw->pvecback[pba->index_bg_dV_trigger]*y[ppw->pv->index_pt_phi_trigger]
+	       - 1./a2*pow(ppw->pvecback[pba->index_bg_phi_prime_trigger],2)*ppw->pvecmetric[ppw->index_mt_psi]);
+	  }
+	  
+	  rho_plus_p_theta_trigger =  1./3.*
+	    k*k/a2*ppw->pvecback[pba->index_bg_phi_prime_trigger]*y[ppw->pv->index_pt_phi_trigger];
+
+ 
+	  delta_trigger = delta_rho_trigger/pvecback[pba->index_bg_rho_trigger];
+	  theta_trigger = rho_plus_p_theta_trigger/(pvecback[pba->index_bg_rho_trigger]+pvecback[pba->index_bg_p_trigger]);
+	}
+      }
+    }
+
 
     delta_b = y[ppw->pv->index_pt_delta_b];
     theta_b = y[ppw->pv->index_pt_theta_b];
@@ -8027,7 +8783,7 @@ int perturb_print_variables(double tau,
 
       /* density and velocity perturbations (comment out if you wish to keep synchronous variables) */
 
-      delta_g -= 4. * pvecback[pba->index_bg_H]*pvecback[pba->index_bg_a]*alpha;
+      /*      delta_g -= 4. * pvecback[pba->index_bg_H]*pvecback[pba->index_bg_a]*alpha;
       theta_g += k*k*alpha;
 
       delta_b -= 3. * pvecback[pba->index_bg_H]*pvecback[pba->index_bg_a]*alpha;
@@ -8036,7 +8792,20 @@ int perturb_print_variables(double tau,
       if (pba->has_ur == _TRUE_) {
         delta_ur -= 4. * pvecback[pba->index_bg_H]*pvecback[pba->index_bg_a]*alpha;
         theta_ur += k*k*alpha;
-      }
+      }*/
+
+      /*New EDE*/
+      /*Here we convert to Newtonian gauge, not really important for running of code but for plotting / Note that the conversion is only well-defined if the equation of state is not -1*/
+      /*
+      if (pba->has_NEDE_pert) {
+	delta_NEDE -= 4. * pvecback[pba->index_bg_H]*pvecback[pba->index_bg_a]*alpha;
+	theta_NEDE += k*k*alpha;
+	if (pba->has_NEDE_trigger){
+	delta_trigger += alpha*(-3.0*H*(1.0+pvecback[pba->index_bg_p_trigger]/pvecback[pba->index_bg_rho_trigger]));
+        theta_trigger += k*k*alpha;
+	}
+      }	
+    
 
       if (pba->has_idr == _TRUE_) {
         delta_idr -= 4. * pvecback[pba->index_bg_H]*pvecback[pba->index_bg_a]*alpha;
@@ -8061,9 +8830,9 @@ int perturb_print_variables(double tau,
 
       if (pba->has_ncdm == _TRUE_) {
         for(n_ncdm=0; n_ncdm < pba->N_ncdm; n_ncdm++){
-          /** - --> TODO: gauge transformation of delta, deltaP/rho (?) and theta using -= 3aH(1+w_ncdm) alpha for delta. */
-        }
-      }
+          /** - --> TODO: gauge transformation of delta, deltaP/rho (?) and theta using -= 3aH(1+w_ncdm) alpha for delta. 
+	  }
+    }
 
       if (pba->has_dcdm == _TRUE_) {
         delta_dcdm += alpha*(-a*pba->Gamma_dcdm-3.*a*H);
@@ -8073,7 +8842,7 @@ int perturb_print_variables(double tau,
       if (pba->has_scf == _TRUE_) {
         delta_scf += alpha*(-3.0*H*(1.0+pvecback[pba->index_bg_p_scf]/pvecback[pba->index_bg_rho_scf]));
         theta_scf += k*k*alpha;
-      }
+      }*/
 
     }
 
@@ -8114,6 +8883,11 @@ int perturb_print_variables(double tau,
     class_store_double(dataptr, delta_ur, pba->has_ur, storeidx);
     class_store_double(dataptr, theta_ur, pba->has_ur, storeidx);
     class_store_double(dataptr, shear_ur, pba->has_ur, storeidx);
+        /** New EDE*/
+    class_store_double(dataptr, delta_NEDE, pba->has_NEDE_pert, storeidx);
+    class_store_double(dataptr, theta_NEDE, pba->has_NEDE_pert, storeidx);
+    class_store_double(dataptr, shear_NEDE, pba->has_NEDE_pert, storeidx);
+
     /* Interacting dark radiation */
     class_store_double(dataptr, delta_idr, pba->has_idr, storeidx);
     class_store_double(dataptr, theta_idr, pba->has_idr, storeidx);
@@ -8144,12 +8918,20 @@ int perturb_print_variables(double tau,
     /* Scalar field scf*/
     class_store_double(dataptr, delta_scf, pba->has_scf, storeidx);
     class_store_double(dataptr, theta_scf, pba->has_scf, storeidx);
+
+    /*New EDE; Trigger field*/
+    class_store_double(dataptr, delta_trigger, pba->has_NEDE_trigger, storeidx);
+    class_store_double(dataptr, theta_trigger, pba->has_NEDE_trigger, storeidx);
+
     /** Fluid */
     class_store_double(dataptr, ppw->delta_rho_fld, pba->has_fld, storeidx);
     class_store_double(dataptr, ppw->rho_plus_p_theta_fld, pba->has_fld, storeidx);
     class_store_double(dataptr, ppw->delta_p_fld, pba->has_fld, storeidx);
     //fprintf(ppw->perturb_output_file,"\n");
 
+
+   
+    
   }
   /** - for tensor modes: */
 
@@ -9131,6 +9913,50 @@ int perturb_derivs(double tau,
             idx += (pv->l_max_ncdm[n_ncdm]+1);
           }
         }
+      }
+    }
+
+    
+    
+    /* New EDE */
+    /*These are the actual perturbation equations*/
+    
+    if (pba->has_NEDE_pert == _TRUE_) {
+
+      if  ((ppw->approx[ppw->index_ap_sda] == (int)sda_off) && (ppw->approx[ppw->index_ap_CCa] == (int)CCa_off))  {
+
+        /** - -----> NEDE density */
+        dy[pv->index_pt_delta_NEDE] =
+          // standard term
+          -(1. + pba->three_eos_NEDE/3.)*(y[pv->index_pt_theta_NEDE] + metric_continuity);
+          // non-standard term, non-zero if if ceff2_ur not 1/3
+	+(pba->three_eos_NEDE - ppt->three_ceff2_NEDE)*a_prime_over_a*(y[pv->index_pt_delta_NEDE] + (3. + pba->three_eos_NEDE)*a_prime_over_a*y[pv->index_pt_theta_NEDE]/k/k);
+
+        /** - -----> NEDE velocity */
+        dy[pv->index_pt_theta_NEDE] =
+          // standard term with extra coefficient (3 ceff2_ur), normally equal to one
+          k2*(ppt->three_ceff2_NEDE*y[pv->index_pt_delta_NEDE]/(3.+pba->three_eos_NEDE)-4.*s2_squared*pba->three_eos_NEDE / (3. + pba->three_eos_NEDE) *y[pv->index_pt_shear_NEDE]) + metric_euler
+          // non-standard term, non-zero if ceff2_ur not 1/3
+          -(1.-ppt->three_ceff2_NEDE)*a_prime_over_a*y[pv->index_pt_theta_NEDE];
+          /* Shear a la Hu */
+	dy[pv->index_pt_shear_NEDE] =
+	  -3.*a_prime_over_a*y[pv->index_pt_shear_NEDE]
+	  +2./3.*ppt->three_cvis2_NEDE / pba->three_eos_NEDE*(y[pv->index_pt_theta_NEDE]+metric_shear);    
+      }
+      
+      /** - ---> trigger field */
+
+      if ((pba->has_NEDE_trigger == _TRUE_) && (ppw->approx[ppw->index_ap_CCa] == (int)CCa_on)) {
+
+	/** - ----> field value */
+
+	dy[pv->index_pt_phi_trigger] = y[pv->index_pt_phi_prime_trigger];
+
+	/** - ----> Klein Gordon equation */
+
+	dy[pv->index_pt_phi_prime_trigger] =  - 2.*a_prime_over_a*y[pv->index_pt_phi_prime_trigger]
+	  - metric_continuity*pvecback[pba->index_bg_phi_prime_trigger] //  metric_continuity = h'/2
+	  - (k2 + a2*pvecback[pba->index_bg_ddV_trigger])*y[pv->index_pt_phi_trigger]; //checked
       }
     }
 
