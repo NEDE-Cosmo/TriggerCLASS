@@ -9928,17 +9928,14 @@ int perturb_derivs(double tau,
         /** - -----> NEDE density */
         dy[pv->index_pt_delta_NEDE] =
           // standard term
-          -(1. + pba->three_eos_NEDE/3.)*(y[pv->index_pt_theta_NEDE] + metric_continuity);
-          // non-standard term, non-zero if if ceff2_ur not 1/3
+          -(1. + pba->three_eos_NEDE/3.)*(y[pv->index_pt_theta_NEDE] + metric_continuity)
 	+(pba->three_eos_NEDE - ppt->three_ceff2_NEDE)*a_prime_over_a*(y[pv->index_pt_delta_NEDE] + (3. + pba->three_eos_NEDE)*a_prime_over_a*y[pv->index_pt_theta_NEDE]/k/k);
 
         /** - -----> NEDE velocity */
         dy[pv->index_pt_theta_NEDE] =
-          // standard term with extra coefficient (3 ceff2_ur), normally equal to one
           k2*(ppt->three_ceff2_NEDE*y[pv->index_pt_delta_NEDE]/(3.+pba->three_eos_NEDE)-4.*s2_squared*pba->three_eos_NEDE / (3. + pba->three_eos_NEDE) *y[pv->index_pt_shear_NEDE]) + metric_euler
-          // non-standard term, non-zero if ceff2_ur not 1/3
-          -(1.-ppt->three_ceff2_NEDE)*a_prime_over_a*y[pv->index_pt_theta_NEDE];
-          /* Shear a la Hu */
+	  -(1.-ppt->three_ceff2_NEDE)*a_prime_over_a*y[pv->index_pt_theta_NEDE];
+          /* Shear, only relevant for cvis2 non-vanishing */
 	dy[pv->index_pt_shear_NEDE] =
 	  -3.*a_prime_over_a*y[pv->index_pt_shear_NEDE]
 	  +2./3.*ppt->three_cvis2_NEDE / pba->three_eos_NEDE*(y[pv->index_pt_theta_NEDE]+metric_shear);    
