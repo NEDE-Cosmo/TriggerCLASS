@@ -519,7 +519,7 @@ int perturb_init(
 
   if (pba->has_NEDE && ppt->perturbations_verbose > 1){
     printf("  -> EDE perturbation details:\n");
-    printf("     -> 3ceff2: %f, 3cvis2: %f \n",ppt->three_ceff2_NEDE,ppt->three_cvis2_NEDE);
+    printf("     -> 3*ceff2: %f, 3*cvis2: %f \n",ppt->three_ceff2_NEDE,ppt->three_cvis2_NEDE);
     printf("     -> Junction_tag: %d \n",pba->Junction_tag);
     printf("     -> EDE sub dom condition: %f \n",ppr->sub_dom_cond);    
   }
