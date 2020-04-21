@@ -5844,7 +5844,7 @@ int perturb_initial_conditions(struct precision * ppr,
 
           ppw->pv->y[ppw->pv->index_pt_phi_trigger] =  - 1./140. * pba->phi_ini_trigger * ppw->pv->y[ppw->pv->index_pt_delta_g] * pow(pba->NEDE_trigger_mass / ppw->pvecback[pba->index_bg_H],2) ;
  
-	  ppw->pv->y[ppw->pv->index_pt_phi_prime_trigger] =  - 3/70 * pba->phi_ini_trigger * ppw->pv->y[ppw->pv->index_pt_delta_g]*pow(pba->NEDE_trigger_mass, 2) * a / ppw->pvecback[pba->index_bg_H] ;
+	  ppw->pv->y[ppw->pv->index_pt_phi_prime_trigger] =  - 3./70. * pba->phi_ini_trigger * ppw->pv->y[ppw->pv->index_pt_delta_g]*pow(pba->NEDE_trigger_mass, 2) * a / ppw->pvecback[pba->index_bg_H] ;
 	}
       }
 
