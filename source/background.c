@@ -366,8 +366,11 @@ int background_functions(
     /* New EDE trigger field */
   /*this function is called at every integration step in order to calculate scalar field related quantities like rho_trigger and so on*/
   if (pba->has_NEDE_trigger == _TRUE_) {
+    //if (-a_rel*0.99 <= pba->a_decay || pba->a_decay ==0 ) {  
     phi = pvecback_B[pba->index_bi_phi_trigger];
     phi_prime = pvecback_B[pba->index_bi_phi_prime_trigger];
+    //if (a_rel>0.99) 
+    //printf("phi: %f",phi);
     pvecback[pba->index_bg_phi_trigger] = phi; // value of the trigger field phi
     pvecback[pba->index_bg_phi_prime_trigger] = phi_prime; // value of the trigger field derivative wrt conformal time
     pvecback[pba->index_bg_V_trigger] = V_trigger(pba,phi); //V_scf(pba,phi); //write here potential as function of phi
@@ -1833,8 +1836,8 @@ int background_solve(
 	 pvecback_integration[pba->index_bi_phi_trigger] = 0.;
 	 pvecback_integration[pba->index_bi_phi_prime_trigger] = 0.;
 	 // tell the integrator to integrat two variables less.
-	 gi.n=pba->bi_size-3;
-       }
+	 //gi.n=pba->bi_size-3;
+      }
               
        /* Check if NEDE has decayed. If it has, set decay_flag=_TRUE_ and store the values of the redshift, scale factor and the energy of the trigger field. */
        if ((pba->NEDE_trigger_mass * pba->Bubble_trigger_H_over_m > pvecback[pba->index_bg_H])&&(pba->decay_flag == _FALSE_)) {
@@ -1850,7 +1853,7 @@ int background_solve(
 	   printf("New EDE decayed at redshift: %f ; fraction New EDE: %f; fraction trigger field: %e \n",pba->z_decay,  pba->Omega_NEDE * pow(pba->H0,2) / (pow(pvecback[pba->index_bg_H],2)), pba->Omega_trigger_decay* pow(pba->H0,2) / pow(pvecback[pba->index_bg_H],2) );
  	 }
        }
-       /*Flo:  make integration finer around decay time; this increases the precision of the code a lot. d is the size of the interval for which we make the integration finer. We smothely turn the resolution enhancement on and of with an exponential. The resolution enhancement is controlled by ppr->decay_res_enhancement*/
+       /*New EDE:  make integration finer around decay time; this increases the precision of the code a lot. d is the size of the interval for which we make the integration finer. We smothely turn the resolution enhancement on and of with an exponential. The resolution enhancement is controlled by ppr->decay_res_enhancement*/
        delta_z=2*ppr->back_integration_stepsize/a;
        if ((1./a-1. <   pba->z_decay + delta_z) && (1./a-1. > pba->z_decay - delta_z) && (pba->z_decay >1.)  ){
 	 //printf("decay: %f, a: %e, z_decay: %e, counter: %d \n", 1./a - 1.,a,pba->z_decay,d);
