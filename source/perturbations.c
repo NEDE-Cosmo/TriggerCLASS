@@ -9937,14 +9937,14 @@ int perturb_derivs(double tau,
 	
         /** - -----> NEDE velocity */
         dy[pv->index_pt_theta_NEDE] =
-          k2*(ppt->three_ceff2_NEDE*y[pv->index_pt_delta_NEDE]/(3.+pba->three_eos_NEDE)-4.*s2_squared*pba->three_eos_NEDE / (3. + pba->three_eos_NEDE) *y[pv->index_pt_shear_NEDE]) + metric_euler
+          k2*(ppt->three_ceff2_NEDE*y[pv->index_pt_delta_NEDE]/(3.+pba->three_eos_NEDE)-s2_squared *y[pv->index_pt_shear_NEDE]) + metric_euler
 	  -(1.-ppt->three_ceff2_NEDE)*a_prime_over_a*y[pv->index_pt_theta_NEDE];
 	//metric_euler=0 in synchronous gauge and s2_squared = 1 without spatial curvature. //Shear term vanishes in standard NEDE scenario. 
 	
 	/* Shear, only relevant for cvis2 non-vanishing, in other cases sigma_NEDE=0 all the time. */
 	dy[pv->index_pt_shear_NEDE] =
 	  -3.*a_prime_over_a*y[pv->index_pt_shear_NEDE]
-	  +2./3.*ppt->three_cvis2_NEDE / pba->three_eos_NEDE*(y[pv->index_pt_theta_NEDE]+metric_shear);
+	  +8./3.*ppt->three_cvis2_NEDE / (pba->three_eos_NEDE+3.)*(y[pv->index_pt_theta_NEDE]+metric_shear);
 	//metric_shear = (h_prime+6eta_prime)/2 in synchronous gauge
       }
       
