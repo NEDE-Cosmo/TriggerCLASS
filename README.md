@@ -1,8 +1,8 @@
 TriggerCLASS
 ==============================================
-forcked from CLASS by Julien Lesgourgues and Thomas Tram; see http://class-code.net and https://github.com/lesgourg/class_public
+forked from CLASS by Julien Lesgourgues and Thomas Tram; see http://class-code.net and https://github.com/lesgourg/class_public
 
-TriggerCLASS is a modification of CLASS that implements a subdominant clock field to trigger the decay of an early dark energy component. As such, it describes the physics of the New Early Dark Energy (NEDE) and Hybrid Early Dark Energy model. The details of the implementation have been explained in the methodology part of https://arxiv.org/abs/2006.06686 and through many additional comments in the code tagged with "NEDE".
+TriggerCLASS is a modification of CLASS that implements an instant phase transition triggered by a clock field and with adiabatic perturbations consistently included, as used to trigger the decay of an early dark energy component. As such, it describes the physics of the New Early Dark Energy (NEDE) and Hybrid Early Dark Energy model. The details of the implementation have been explained in the methodology part of https://arxiv.org/abs/2006.06686 and through many additional comments in the code tagged with "NEDE".
 
 
 
