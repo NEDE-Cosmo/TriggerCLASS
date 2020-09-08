@@ -9,7 +9,7 @@ TriggerCLASS is a modification of CLASS that implements a subdominant clock fiel
 Compiling TriggerCLASS and getting started
 -----------------------------------
 
-In order to install TriggerCLASS, clone the branch "NewEDEv3" in a new folder and follow the same steps as required for the installation of the base CLASS code detailed on https://github.com/lesgourg/class_public. Also see the Wiki page:
+In order to install TriggerCLASS, clone the branch "NewEDEv3" in a new folder and follow the same steps as required for the installation of the base CLASS code detailed in https://github.com/lesgourg/class_public. Also see the Wiki page:
 
 https://github.com/lesgourg/class_public/wiki/Installation
 
@@ -17,7 +17,7 @@ After compiling it, check that TriggerCLASS has been properly set up by running 
     
     ./class explanatory.ini
 
-This corresponds to a standard LCDM run. To check that the trigger component works correctly, type:
+This corresponds to a standard LambdaCDM run. To check that the trigger component works correctly, type:
 
     ./class input/NewEDE.ini
 
