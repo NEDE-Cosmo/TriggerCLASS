@@ -6,26 +6,26 @@ forcked from CLASS by Julien Lesgourgues and Thomas Tram; see http://class-code.
 
 
 
-TriggerCLASS is a mofication of CLASS which implements a subdominant clock field to trigger the decay of an Early Dark Energy component. As such it describes the physics of the New Early Dark Energy and Hybrid Early Dark Energy models. The details of the implementation have been explained in the methodology part of https://arxiv.org/abs/2006.06686 and through many additional comments in the code tagged with "NEDE".
+TriggerCLASS is a mofication of CLASS that implements a subdominant clock field to trigger the decay of an early dark energy component. As such, it describes the physics of the New Early Dark Energy and Hybrid Early Dark Energy model. The details of the implementation have been explained in the methodology part of https://arxiv.org/abs/2006.06686 and through many additional comments in the code tagged with "NEDE".
 
 
 
 Compiling TriggerCLASS and getting started
 -----------------------------------
 
-In order to install TriggerCLASS, clone TriggerCLASS in a new folder and follow the same steps as requiired for the installation of the base CLASS code detailed on https://github.com/lesgourg/class_public. Also see the Wiki page:
+In order to install TriggerCLASS, clone it in a new folder and follow the same steps as required for the installation of the base CLASS code detailed on https://github.com/lesgourg/class_public. Also see the Wiki page:
 
 https://github.com/lesgourg/class_public/wiki/Installation
 
-First check that CLASS has been properly set up by running:
+After compiling it, check that TriggerCLASS has been properly set up by running:
     
     ./class explanatory.ini
 
-To check that the trigger component works correctly, type:
+This corresponds to a standard LCDM run. To check that the trigger component works correctly, type:
 
     ./class input/NewEDE.ini
 
-This should result in a class run with a non-vanishing fraction of NEDE. The output should provide a detailed account of the NEDE parameters.
+This should result in a run with a non-vanishing fraction of NEDE. The output should provide a detailed account of the NEDE parameters.
 The NewEDE.ini also explains the NEDE input parameters.
 
 MCMC analysis
