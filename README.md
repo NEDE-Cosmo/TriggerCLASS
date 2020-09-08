@@ -1,118 +1,42 @@
-CLASS: Cosmic Linear Anisotropy Solving System  {#mainpage}
+TriggerCLASS
 ==============================================
+Authors: Florian Niedermann and Martin S. Sloth
 
-Authors: Julien Lesgourgues and Thomas Tram
-
-with several major inputs from other people, especially Benjamin
-Audren, Simon Prunet, Jesus Torrado, Miguel Zumalacarregui, Francesco
-Montanari, etc.
-
-For download and information, see http://class-code.net
+forcked from CLASS by Julien Lesgourgues and Thomas Tram; see http://class-code.net and https://github.com/lesgourg/class_public
 
 
-Compiling CLASS and getting started
+
+TriggerCLASS is a mofication of CLASS which implements a subdominant clock field to trigger the decay of an Early Dark Energy component. As such it describes the physics of the New Early Dark Energy and Hybrid Early Dark Energy models. The details of the implementation have been explained in the methodology part of https://arxiv.org/abs/2006.06686 and through many additional comments in the code tagged with "NEDE".
+
+
+
+Compiling TriggerCLASS and getting started
 -----------------------------------
 
-(the information below can also be found on the webpage, just below
-the download button)
-
-Download the code from the webpage and unpack the archive (tar -zxvf
-class_vx.y.z.tar.gz), or clone it from
-https://github.com/lesgourg/class_public. Go to the class directory
-(cd class/ or class_public/ or class_vx.y.z/) and compile (make clean;
-make class). You can usually speed up compilation with the option -j:
-make -j class. If the first compilation attempt fails, you may need to
-open the Makefile and adapt the name of the compiler (default: gcc),
-of the optimization flag (default: -O4 -ffast-math) and of the OpenMP
-flag (default: -fopenmp; this flag is facultative, you are free to
-compile without OpenMP if you don't want parallel execution; note that
-you need the version 4.2 or higher of gcc to be able to compile with
--fopenmp). Many more details on the CLASS compilation are given on the
-wiki page
+In order to install TriggerCLASS, clone TriggerCLASS in a new folder and follow the same steps as requiired for the installation of the base CLASS code detailed on https://github.com/lesgourg/class_public. Also see the Wiki page:
 
 https://github.com/lesgourg/class_public/wiki/Installation
 
-(in particular, for compiling on Mac >= 10.9 despite of the clang
-incompatibility with OpenMP).
-
-To check that the code runs, type:
-
+First check that CLASS has been properly set up by running:
+    
     ./class explanatory.ini
 
-The explanatory.ini file is THE reference input file, containing and
-explaining the use of all possible input parameters. We recommend to
-read it, to keep it unchanged (for future reference), and to create
-for your own purposes some shorter input files, containing only the
-input lines which are useful for you. Input files must have a *.ini
-extension.
+To check that the trigger component works correctly, type:
 
-If you want to play with the precision/speed of the code, you can use
-one of the provided precision files (e.g. cl_permille.pre) or modify
-one of them, and run with two input files, for instance:
+    ./class input/NewEDE.ini
 
-    ./class test.ini cl_permille.pre
+This should result in a class run with a non-vanishing fraction of NEDE. The output should provide a detailed account of the NEDE parameters.
+The NewEDE.ini also explains the NEDE input parameters.
 
-The files *.pre are suppposed to specify the precision parameters for
-which you don't want to keep default values. If you find it more
-convenient, you can pass these precision parameter values in your *.ini
-file instead of an additional *.pre file.
-
-The automatically-generated documentation is located in
-
-    doc/manual/html/index.html
-    doc/manual/CLASS_manual.pdf
-
-On top of that, if you wish to modify the code, you will find lots of
-comments directly in the files.
-
-Python
+MCMC analysis
 ------
 
-To use CLASS from python, or ipython notebooks, or from the Monte
-Python parameter extraction code, you need to compile not only the
-code, but also its python wrapper. This can be done by typing just
-'make' instead of 'make class' (or for speeding up: 'make -j'). More
-details on the wrapper and its compilation are found on the wiki page
-
-https://github.com/lesgourg/class_public/wiki
-
-Plotting utility
-----------------
-
-Since version 2.3, the package includes an improved plotting script
-called CPU.py (Class Plotting Utility), written by Benjamin Audren and
-Jesus Torrado. It can plot the Cl's, the P(k) or any other CLASS
-output, for one or several models, as well as their ratio or percentage
-difference. The syntax and list of available options is obtained by
-typing 'pyhton CPU.py -h'. There is a similar script for MATLAB,
-written by Thomas Tram. To use it, once in MATLAB, type 'help
-plot_CLASS_output.m'
-
-Developing the code
---------------------
-
-If you want to develop the code, we suggest that you download it from
-the github webpage
-
-https://github.com/lesgourg/class_public
-
-rather than from class-code.net. Then you will enjoy all the feature
-of git repositories. You can even develop your own branch and get it
-merged to the public distribution. For related instructions, check
-
-https://github.com/lesgourg/class_public/wiki/Public-Contributing
-
-Using the code
---------------
-
-You can use CLASS freely, provided that in your publications, you cite
-at least the paper `CLASS II: Approximation schemes <http://arxiv.org/abs/1104.2933>`. Feel free to cite more CLASS papers!
+In order to run MCMC chains, we recommend using MontePython, https://github.com/brinckmann/montepython_public, and follow their installation instructions. Our baseline MCMC run (as discussed in https://arxiv.org/abs/2006.06686) can be found under input/run_NEDE_base_wH0.param. To make it run, you first need to update MontePython with the files from the folder montepython_tree. In particular, this will update the data.py, needed to vary the fraction of NEDE and the log of the trigger mass directly. The corresponding covariance matrix and bestfit file can be found in the respective subfolders covmat and bestfit.
 
 Support
 -------
 
-To get support, please open a new issue on the
+To get support, please open a new issue on
 
-https://github.com/lesgourg/class_public
+https://github.com/flo1984/TriggerClass
 
-webpage!
