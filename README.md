@@ -2,14 +2,14 @@ TriggerCLASS
 ==============================================
 forcked from CLASS by Julien Lesgourgues and Thomas Tram; see http://class-code.net and https://github.com/lesgourg/class_public
 
-TriggerCLASS is a modification of CLASS that implements a subdominant clock field to trigger the decay of an early dark energy component. As such, it describes the physics of the New Early Dark Energy and Hybrid Early Dark Energy model. The details of the implementation have been explained in the methodology part of https://arxiv.org/abs/2006.06686 and through many additional comments in the code tagged with "NEDE".
+TriggerCLASS is a modification of CLASS that implements a subdominant clock field to trigger the decay of an early dark energy component. As such, it describes the physics of the New Early Dark Energy (NEDE) and Hybrid Early Dark Energy model. The details of the implementation have been explained in the methodology part of https://arxiv.org/abs/2006.06686 and through many additional comments in the code tagged with "NEDE".
 
 
 
 Compiling TriggerCLASS and getting started
 -----------------------------------
 
-In order to install TriggerCLASS, clone the branch NEDEv3 in a new folder and follow the same steps as required for the installation of the base CLASS code detailed on https://github.com/lesgourg/class_public. Also see the Wiki page:
+In order to install TriggerCLASS, clone the branch "NEDEv3" in a new folder and follow the same steps as required for the installation of the base CLASS code detailed on https://github.com/lesgourg/class_public. Also see the Wiki page:
 
 https://github.com/lesgourg/class_public/wiki/Installation
 
