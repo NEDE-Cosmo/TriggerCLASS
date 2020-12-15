@@ -3293,6 +3293,7 @@ int input_default_params(
   pba->Bubble_trigger_H_over_m = .2;
   pba->NEDE_trigger_mass = 0.;
   pba->z_decay = 0.;
+  pba->a_decay = 0.;
 
   ppt->three_ceff2_NEDE=1.;
   ppt->three_cvis2_NEDE=1.;
