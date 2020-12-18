@@ -517,12 +517,18 @@ int perturb_init(
       printf("Computing sources\n");
   }
 
-  if (pba->has_NEDE && ppt->perturbations_verbose > 1){
-    printf("  -> EDE perturbation details:\n");
-    printf("     -> 3*ceff2: %f, 3*cvis2: %f \n",ppt->three_ceff2_NEDE,ppt->three_cvis2_NEDE);
+ if (pba->has_NEDE && ppt->perturbations_verbose > 1){
+    printf("  -> NEDE perturbation details:\n");
+    if (ppt->NEDE_ceff_nature == NEDE_ceff_const)
+      printf("     -> 3*ceff2: %f (constant)\n",ppt->three_ceff2_NEDE);
+    else
+      printf("     -> ceff2 = ca2 (tracking) \n");
+   
+    printf("     -> 3*cvis2: %f (constant) \n",ppt->three_cvis2_NEDE);
     printf("     -> Junction_tag: %d \n",pba->Junction_tag);
     printf("     -> EDE sub dom condition: %f \n",ppr->sub_dom_cond);    
-  }
+ }
+ 
 
 
   
@@ -9157,6 +9163,8 @@ int perturb_derivs(double tau,
 
   double Sinv=0., dmu_idm_dr=0., dmu_idr=0., tca_slip_idm_dr=0.;
 
+  double cs2_NEDE;
+
   /** - rename the fields of the input structure (just to avoid heavy notations) */
 
   pppaw = parameters_and_workspace;
@@ -9929,16 +9937,25 @@ int perturb_derivs(double tau,
 
       if  ((ppw->approx[ppw->index_ap_sda] == (int)sda_off) && (ppw->approx[ppw->index_ap_CCa] == (int)CCa_off))  {
 
+
+	/** Decide if effective rest-frame sound speed is constant or tracking the adiabatic sound speed (note that w_NEDE=const). */
+	
+	if (ppt->NEDE_ceff_nature == NEDE_ceff_const){
+	  cs2_NEDE = ppt->three_ceff2_NEDE/3.;
+	}
+	else 
+	  cs2_NEDE = pba->three_eos_NEDE/3.;
+	
         /** - -----> NEDE density */
         dy[pv->index_pt_delta_NEDE] =
           -(1. + pba->three_eos_NEDE/3.)*(y[pv->index_pt_theta_NEDE] + metric_continuity)
-	+(pba->three_eos_NEDE - ppt->three_ceff2_NEDE)*a_prime_over_a*(y[pv->index_pt_delta_NEDE] + (3. + pba->three_eos_NEDE)*a_prime_over_a*y[pv->index_pt_theta_NEDE]/k/k);
+	+(pba->three_eos_NEDE - 3.*cs2_NEDE)*a_prime_over_a*(y[pv->index_pt_delta_NEDE] + (3. + pba->three_eos_NEDE)*a_prime_over_a*y[pv->index_pt_theta_NEDE]/k/k);
 	// metric_continuity = h'/2
 	
         /** - -----> NEDE velocity */
         dy[pv->index_pt_theta_NEDE] =
-          k2*(ppt->three_ceff2_NEDE*y[pv->index_pt_delta_NEDE]/(3.+pba->three_eos_NEDE)-s2_squared *y[pv->index_pt_shear_NEDE]) + metric_euler
-	  -(1.-ppt->three_ceff2_NEDE)*a_prime_over_a*y[pv->index_pt_theta_NEDE];
+          k2*(3.*cs2_NEDE*y[pv->index_pt_delta_NEDE]/(3.+pba->three_eos_NEDE)-s2_squared *y[pv->index_pt_shear_NEDE]) + metric_euler
+	  -(1.-3.*cs2_NEDE)*a_prime_over_a*y[pv->index_pt_theta_NEDE];
 	//metric_euler=0 in synchronous gauge and s2_squared = 1 without spatial curvature. //Shear term vanishes in standard NEDE scenario. 
 	
 	/* Shear, only relevant for cvis2 non-vanishing, in other cases sigma_NEDE=0 all the time. */

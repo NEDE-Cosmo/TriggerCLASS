@@ -1862,11 +1862,18 @@ int background_solve(
        }  
     }
 
-
-
-    class_test((tau_end-tau_start)/tau_start < ppr->smallest_allowed_variation,
+    /*class_test((tau_end-tau_start)/tau_start < ppr->smallest_allowed_variation,
                pba->error_message,
-               "integration step: relative change in time =%e < machine precision : leads either to numerical error or infinite loop",(tau_end-tau_start)/tau_start);
+               "integration step: relative change in time =%e < machine precision : leads either to numerical error or infinite loop",(tau_end-tau_start)/tau_start);*/
+
+    /*NEDE: If time step too small set it to machine precission, rather than throwing an error, which can disrupt MCMC runs.*/
+
+    if ((tau_end-tau_start)/tau_start < ppr->smallest_allowed_variation){
+      tau_end = tau_start + ppr->smallest_allowed_variation*tau_start;
+      if (pba->background_verbose > 0)
+	printf("Final integration step adjusted.");
+    }
+
 
     /* -> save data in growTable */
     class_call(gt_add(&gTable,_GT_END_,(void *) pvecback_integration,sizeof(double)*pba->bi_size),
@@ -2069,8 +2076,8 @@ int background_solve(
       
       printf("  -> New EDE details:\n");
       printf("     -> Percolation trigger (H/m): %f \n", pba->Bubble_trigger_H_over_m);
-      printf("     -> H/H0-1: %e \n",pvecback[pba->index_bg_H]/pba->H0-1);
-      printf("     -> e.o.s. NEDE: %e \n",pba->three_eos_NEDE/3.);
+      printf("     -> closure check: H/H0-1: %e \n",pvecback[pba->index_bg_H]/pba->H0-1);
+      printf("     -> eos NEDE: omega = %e \n",pba->three_eos_NEDE/3.);
       
       printf("     -> resolution_enhancement: %e \n",ppr->decay_res_enhancement);
       if (pba->has_NEDE_trigger == _TRUE_)

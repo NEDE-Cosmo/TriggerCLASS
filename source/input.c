@@ -630,6 +630,10 @@ int input_read_parameters(
 
   int flag1,flag2,flag3;
   double param1,param2,param3;
+  double param_NEDE;
+  int flag_NEDE;
+  char string_NEDE[_ARGUMENT_LENGTH_MAX_];
+  
   int N_ncdm=0,n,entries_read;
   int int1,fileentries;
   double scf_lambda;
@@ -1267,37 +1271,72 @@ int input_read_parameters(
   class_read_double("three_cvis2_EDE",ppt->three_cvis2_NEDE);
   class_read_double("EDE2_clock_ini",pba->NEDE_trigger_ini);
   class_read_double("EDE2_clock_mass",pba->NEDE_trigger_mass);
-
+  class_read_double("EDE2_trigger_ini",pba->NEDE_trigger_ini);
+  class_read_double("EDE2_trigger_mass",pba->NEDE_trigger_mass);
+  class_read_double("Bubble_trigger_H_over_m",pba->Bubble_trigger_H_over_m);
+  class_read_double("Omega_NEDE",pba->Omega_NEDE); //Omega before decay (const)
+  
   /*new convention*/
 
-  class_read_double("Omega_NEDE",pba->Omega_NEDE);
+ 
+  class_read_double("f_NEDE",pba->f_NEDE);
+  class_read_double("NEDE_trigger_mass",pba->NEDE_trigger_mass);
   class_read_double("three_eos_NEDE",pba->three_eos_NEDE);
   class_read_double("three_ceff2_NEDE",ppt->three_ceff2_NEDE);
   class_read_double("three_cvis2_NEDE",ppt->three_cvis2_NEDE);
-  class_read_double("EDE2_trigger_ini",pba->NEDE_trigger_ini);
-  class_read_double("EDE2_trigger_mass",pba->NEDE_trigger_mass);
-
-  class_read_double("Bubble_trigger_H_over_m",pba->Bubble_trigger_H_over_m);
+  class_read_double("H_over_m_NEDE",pba->Bubble_trigger_H_over_m);
+  class_read_double("NEDE_trigger_ini",pba->NEDE_trigger_ini);
   class_read_double("Junction_tag", pba->Junction_tag);
+  class_read_double("Omega0_NEDE",pba->Omega0_NEDE); //Omega today, is only used internally, when finding a better fit for z_decay.
 
 
-  if (pba->Omega_NEDE > 0) {
+   //Decide if the effective sound speed is tracking the adiabatic sound speed. Default: no tracking (constant)
+  class_call(parser_read_string(pfc,"NEDE_ceff_nature",&string_NEDE,&flag_NEDE,errmsg),
+                 errmsg,
+                 errmsg);
+
+  if (flag_NEDE == _TRUE_) {
+    if ((strstr(string_NEDE,"constant") != NULL) || (strstr(string1,"Constant") != NULL) || (strstr(string1,"CONSTANT") != NULL) || (strstr(string1,"const") != NULL)) {
+      ppt->NEDE_ceff_nature = NEDE_ceff_const;
+    }
+    if ((strstr(string_NEDE,"tracking") != NULL) || (strstr(string1,"Tracking") != NULL) || (strstr(string1,"TRACKING") != NULL)) {
+      ppt->NEDE_ceff_nature = NEDE_ceff_tracking;
+    }
+  }
+
+
+  
+  if ((pba->Omega_NEDE > 0)||(pba->f_NEDE>0)){
+     class_test(pba->NEDE_trigger_mass==0,errmsg,
+             "In input file, NEDE_trigger_mass>0  needs to be specified for NEDE.");
+     
+    if (pba->Omega_NEDE == 0)
+      pba->Omega_NEDE = pba->f_NEDE * pow(pba->NEDE_trigger_mass*pba->Bubble_trigger_H_over_m / pba->H0,2);
+    else if (pba->f_NEDE == 0)
+      pba->f_NEDE = pba->Omega_NEDE/pow(pba->NEDE_trigger_mass*pba->Bubble_trigger_H_over_m / pba->H0,2);
+
     if (pba->NEDE_trigger_ini !=0){
       pba->phi_ini_trigger = pba->NEDE_trigger_ini;
       pba->phi_prime_ini_trigger = 0; //This value is set to the attractor later.
       }
 
-/*Here we do a first run of the background module to get a good guess for z_decay. For this we do not need a super precise value of Omega_lambda as the decay happens during rad domination when Omega_lambda is subdom.. */
+
+    /*Here we do a first run of the background module to get a good guess for z_decay. For this we do not need a super precise value of Omega_lambda as the decay happens during rad domination when Omega_lambda is subdom.. */
 
     class_read_double("background_verbose",pba->background_verbose);
     class_read_double("back_integration_stepsize",ppr->back_integration_stepsize);
 
-
-    pba->Omega0_lambda= 1. - pba->Omega0_k - Omega_tot;
+    //initial guess for decay time
+    //pba->z_decay = 1420.0 * pow(1-pba->f_NEDE,1./4.) * pba->Bubble_trigger_H_over_m * pow(pba->NEDE_trigger_mass,0.5);
+    //pba->a_decay = 1./(1.+pba->z_decay);
+    //pba->Omega0_NEDE = pba->Omega_NEDE/pow(1+pba->z_decay,3.+pba->three_eos_NEDE);
+    
+    pba->Omega0_NEDE = 0; //Sufficiently good initial guess as NEDE decays quickly.
+    pba->Omega0_lambda= 1. - pba->Omega0_k - Omega_tot - pba->Omega0_NEDE;
       
     if (pba->background_verbose >1){
       printf("trigger mass: %f, Omega_EDE: %e, EOS: %f \n",pba->NEDE_trigger_mass,pba->Omega_NEDE,pba->three_eos_NEDE/3.);
-      printf("First run to estimate Omega0_NEDE with Omega0_lambda: %e \n",pba->Omega0_lambda);
+      printf("First run to estimate Omega0_NEDE and z_decay. Initial estimate is z_decay = %e and Omega0_NEDE = %e \n",pba->z_decay, pba->Omega0_NEDE);
     }
    
     class_call(find_z_decay(ppr,pba,errmsg),errmsg,errmsg);
@@ -1305,14 +1344,19 @@ int input_read_parameters(
     pba->Omega0_lambda= 1. - pba->Omega0_k - Omega_tot - pba->Omega0_NEDE - pba->Omega0_trigger;
 
     if (pba->background_verbose >1)
-      printf("Second run to estimate Omega0_NEDE with Omega0_lambda: %e \n",pba->Omega0_lambda);
+      printf("Second run to estimate Omega0_NEDE and z_decay. Second estimate is z_decay = %e and Omega0_NEDE = %e \n",pba->z_decay, pba->Omega0_NEDE);
 
     class_call(find_z_decay(ppr,pba,errmsg),errmsg,errmsg);
+    
+    if (pba->background_verbose >1)
+      printf("Final  estimate is z_decay = %e and Omega0_NEDE = %e \n",pba->z_decay, pba->Omega0_NEDE);
 
+    
     Omega_tot += pba->Omega0_NEDE;
     Omega_tot += pba->Omega0_trigger;
   }
-  
+
+ 
 
 
   
@@ -3282,21 +3326,22 @@ int input_default_params(
 
   /* - New EDE parameters */
   pba->Omega_trigger_decay = 0.;
-  pba->three_eos_NEDE = 1.;
-  pba->Omega_NEDE = 0.; 
+  pba->three_eos_NEDE = 2.; //Default: w=2/3.
+  pba->Omega_NEDE = 0.;
+  pba->f_NEDE =0;
   pba->Omega0_NEDE = 0.;
-  pba->Omega0_trigger = 0.;
-  pba->decay_flag = _FALSE_;
-  pba->Junction_tag = 1;
-  pba->NEDE_trigger_ini = 0;
+  pba->Omega0_trigger = 0.; 
+  pba->decay_flag = _FALSE_; //Initially the decay has not yet taken place.
+  pba->Junction_tag = 1; //Default: standard junction condition inferred from matching.
+  pba->NEDE_trigger_ini = 0.001;
 
-  pba->Bubble_trigger_H_over_m = .2;
+  pba->Bubble_trigger_H_over_m = .2; //Default value ionferred from miscroscpic model.
   pba->NEDE_trigger_mass = 0.;
   pba->z_decay = 0.;
   pba->a_decay = 0.;
 
-  ppt->three_ceff2_NEDE=1.;
-  ppt->three_cvis2_NEDE=1.;
+  ppt->three_ceff2_NEDE=2.; //Default: matches adiabatic sound speed.
+  ppt->three_cvis2_NEDE=0.;
 
 
 
