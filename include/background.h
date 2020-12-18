@@ -66,7 +66,10 @@ struct background
   double Omega_NEDE;
 
   /*New EDE  today*/
-  double Omega0_NEDE;  
+  double Omega0_NEDE;
+
+  /* Fraction of New EDE at decay time*/
+  double f_NEDE;
 
   /*New EDE  trigger at decay time*/
   double Omega_trigger_decay;
@@ -97,7 +100,9 @@ struct background
   /* New EDE decay time */
   double tau_decay;
   double a_decay;
-  double z_decay; 
+  double z_decay;
+
+  
 
 
   enum equation_of_state fluid_equation_of_state; /**< parametrisation scheme for fluid equation of state */
