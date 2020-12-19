@@ -1320,6 +1320,9 @@ int input_read_parameters(
       pba->phi_prime_ini_trigger = 0; //This value is set to the attractor later.
       }
 
+    class_test(pba->f_NEDE>0.5,errmsg,
+             "Choose a smaller amount of NEDE as the code has not been tested for f_NEDE > 0.4.");
+
 
     /*Here we do a first run of the background module to get a good guess for z_decay. For this we do not need a super precise value of Omega_lambda as the decay happens during rad domination when Omega_lambda is subdom.. */
 
