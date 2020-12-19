@@ -526,7 +526,7 @@ int perturb_init(
    
     printf("     -> 3*cvis2: %f (constant) \n",ppt->three_cvis2_NEDE);
     printf("     -> Junction_tag: %d \n",pba->Junction_tag);
-    printf("     -> EDE sub dom condition: %f \n",ppr->sub_dom_cond);    
+    printf("     -> NEDE sub-dominant condition: %e \n",ppr->sub_dom_cond);    
  }
  
 
