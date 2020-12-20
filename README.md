@@ -6,7 +6,7 @@ TriggerCLASS is a modification of CLASS that implements an instant phase transit
 
 The version used for the publications ArXiv: 1910.10739, 2006.06686, 2009.00006 has been tagged with "NewEDEv3.0".
 
-New in version 4 [20 Dec 2020]: TriggerCLASS now accepts f_NEDE as input parameter (replaces Omega_NEDE). Introduced ``tracking mode'' for which the rest-frame sound speed equals the adiabatic sound speed. Output improvments and more detailed comments. 
+New in version 4 [20 Dec 2020]: TriggerCLASS now accepts f_NEDE as input parameter (replaces Omega_NEDE). Introduced "tracking mode" for which the rest-frame sound speed equals the adiabatic sound speed. Output improvments and more detailed comments. 
 
 Compiling TriggerCLASS and getting started
 -----------------------------------
@@ -15,7 +15,7 @@ In order to install TriggerCLASS, clone the branch "NewEDEv4" in a new folder an
 
 https://github.com/lesgourg/class_public/wiki/Installation
 
-After compiling it, check that TriggerCLASS has been properly set up by running first
+For a successfull compilation adapt the compiler information in "Makefile" and "./python/setup.py".  After compiling it, check that TriggerCLASS has been properly set up by running first
     
     ./class input/explanatory.ini
 
