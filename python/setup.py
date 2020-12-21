@@ -7,7 +7,7 @@ import os
 import subprocess as sbp
 import os.path as osp
 
-os.environ["CC"] = "gcc-9"
+#os.environ["CC"] = "gcc-9"
 
 # Recover the gcc compiler
 GCCPATH_STRING = sbp.Popen(
