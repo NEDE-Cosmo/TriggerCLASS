@@ -8194,10 +8194,11 @@ int perturb_sources(
     }
 
     /* New EDE */
-    /*This part is relevant if we calculate matter transfer function for individual components, which we never do*/
+    /*This part is relevant if we need non CMB sources (so far never used)*/
     if (ppt->has_source_delta_NEDE == _TRUE_) {
       if ((ppw->approx[ppw->index_ap_sda] == (int)sda_off) &&(ppw->approx[ppw->index_ap_CCa]==(int)CCa_off))
-        _set_source_(ppt->index_tp_delta_NEDE) = y[ppw->pv->index_pt_delta_NEDE];
+	_set_source_(ppt->index_tp_delta_NEDE) = y[ppw->pv->index_pt_delta_NEDE]
+	  + 3.*a_prime_over_a*(1.+ pba->three_eos_NEDE/3.)*theta_over_k2; // N-body gauge correction
       else
 	_set_source_(ppt->index_tp_delta_NEDE) = 0.0;
     }
@@ -8327,7 +8328,8 @@ int perturb_sources(
     /*same for theta*/
     if (ppt->has_source_theta_NEDE == _TRUE_) {
       if ((ppw->approx[ppw->index_ap_sda]==(int)sda_off)&&(ppw->approx[ppw->index_ap_CCa]==(int)CCa_off))
-        _set_source_(ppt->index_tp_theta_NEDE) = y[ppw->pv->index_pt_theta_NEDE];
+	_set_source_(ppt->index_tp_theta_NEDE) = y[ppw->pv->index_pt_theta_NEDE]
+	  + theta_shift; // N-body gauge correction
       else
 	_set_source_(ppt->index_tp_theta_NEDE) = 0.0;
     }
