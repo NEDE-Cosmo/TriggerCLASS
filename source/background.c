@@ -291,6 +291,7 @@ int background_functions(
 
   /*New EDE*/
   double rho_NEDE_decay;
+  double w_NEDE, dw_over_da_NEDE, integral_NEDE;
 
   /** - initialize local variables */
   a = pvecback_B[pba->index_bi_a];
@@ -491,18 +492,26 @@ int background_functions(
       rho_NEDE_decay = pba->Omega_NEDE * pow(pba->H0, 2);
       /* Save value of rho in array for later use.*/
       pvecback[pba->index_bg_rho_NEDE] = rho_NEDE_decay;
+      pvecback[pba->index_bg_w_NEDE] = -1;
 
       p_tot -= rho_NEDE_decay;   /*add pressure contribution*/
       rho_tot += rho_NEDE_decay; /*add energy contribution*/
     }
     else
     {
-      /* decay phase with w > 1/3 */
-      rho_NEDE_decay = (pba->Omega_NEDE) * pow(pba->H0, 2) * pow(pba->a_decay / a_rel, 3. + pba->three_eos_NEDE);
+      /* NEDE decay phase with w > 0 */
+
+      class_call(background_quantities_NEDE(pba, a_rel, 0, &rho_NEDE_decay, NULL, &w_NEDE, &dw_over_da_NEDE, NULL),
+                 pba->error_message,
+                 pba->error_message);
+
       pvecback[pba->index_bg_rho_NEDE] = rho_NEDE_decay;
-      p_tot += (pba->three_eos_NEDE / 3.) * rho_NEDE_decay;
+
+      pvecback[pba->index_bg_w_NEDE] = w_NEDE;
+      p_tot += w_NEDE * rho_NEDE_decay;
       rho_tot += rho_NEDE_decay;
-      dp_dloga += (-(3. + pba->three_eos_NEDE) * pba->three_eos_NEDE / 3.) * pvecback[pba->index_bg_rho_NEDE];
+
+      dp_dloga += (a * dw_over_da_NEDE - 3 * (1 + w_NEDE) * w_NEDE) * pvecback[pba->index_bg_rho_NEDE];
     }
   }
 
@@ -679,6 +688,65 @@ int background_w_fld(
       defining new parameters pba->w..._fld. Just remember that so
       far, HyRec explicitely assumes that w(a)= w0 + wa (1-a/a0); but
       Recfast does not assume anything */
+
+  return _SUCCESS_;
+}
+
+/**
+ * Single place where the NEDE fluid equation of state is
+ * defined. Parameters of the function are passed through the
+ * background structure. Generalisation to arbitrary functions should
+ * be simple.
+ *
+ * @param pba            Input: pointer to background structure
+ * @param a              Input: current value of scale factor
+ * @param a_prime_over_a Input: Hubble parameter
+ * @param rho             Output: rho_NEDE(a)
+ * @param p               Output: p_NEDE(a)
+ * @param w               Output: equation of state parameter w_NEDE(a)
+ * @param dw_over_da      Output: function dw_NEDE/da
+ * @param ca2             Output: adiabatic sound speed$
+ * @return the error status
+ */
+
+int background_quantities_NEDE(
+    struct background *pba,
+    double a,
+    double a_prime_over_a,
+    double *rho,
+    double *p,
+    double *w,
+    double *dw_over_da,
+    double *ca2)
+{
+  double x, a_over_a_non_rel;
+  double rhohat, phat, drhohat_dx, dphat_dx;
+  int last_index_1 = 1, last_index_2, i;
+  double w_prime;
+  double w_local = 0.;
+  double rho_local, dw_over_da_local;
+  double *vec;
+
+  switch (pba->NEDE_fld_nature)
+  {
+  case NEDE_fld_A:
+    w_local = pba->three_eos_NEDE / 3.;
+    rho_local = (pba->Omega_NEDE) * pow(pba->H0, 2) * pow(pba->a_decay / a, 3. + 3. * w_local);
+    w_prime = 0.;
+
+    if (w != NULL)
+      *w = w_local;
+    if (dw_over_da != NULL)
+      *dw_over_da = 0;
+    if (rho != NULL)
+      *rho = rho_local;
+    if (p != NULL)
+      *p = w_local * rho_local;
+    if ((ca2 != NULL) && (a_prime_over_a != 0.))
+      *ca2 = w_local - w_prime / 3. / (1. + w_local) / a_prime_over_a;
+
+    break;
+  }
 
   return _SUCCESS_;
 }
@@ -1102,6 +1170,8 @@ int background_indices(
      normal vector */
   /* - index for NEDE   */
   class_define_index(pba->index_bg_rho_NEDE, pba->has_NEDE, index_bg, 1);
+  /* - index for NEDE eos   */
+  class_define_index(pba->index_bg_w_NEDE, pba->has_NEDE, index_bg, 1);
   /* - index for trigger   */
   class_define_index(pba->index_bg_phi_trigger, pba->has_NEDE_trigger, index_bg, 1);
   class_define_index(pba->index_bg_phi_prime_trigger, pba->has_NEDE_trigger, index_bg, 1);
@@ -2540,6 +2610,7 @@ int background_output_titles(struct background *pba,
   /* New EDE */
   /* titles for printing in file */
   class_store_columntitle(titles, "(.)rho_NEDE", pba->has_NEDE);
+  class_store_columntitle(titles, "(.)w_NEDE", pba->has_NEDE);
   class_store_columntitle(titles, "(.)rho_trigger", pba->has_NEDE_trigger);
   class_store_columntitle(titles, "(.)p_trigger", pba->has_NEDE_trigger);
   class_store_columntitle(titles, "(.)p_prime_trigger", pba->has_NEDE_trigger);
@@ -2612,6 +2683,7 @@ int background_output_data(
     /*New EDE*/
     /*decide which values are printed in file*/
     class_store_double(dataptr, pvecback[pba->index_bg_rho_NEDE], pba->has_NEDE, storeidx);
+    class_store_double(dataptr, pvecback[pba->index_bg_w_NEDE], pba->has_NEDE, storeidx);
     class_store_double(dataptr, pvecback[pba->index_bg_rho_trigger], pba->has_NEDE_trigger, storeidx);
     class_store_double(dataptr, pvecback[pba->index_bg_p_trigger], pba->has_NEDE_trigger, storeidx);
     class_store_double(dataptr, pvecback[pba->index_bg_p_prime_trigger], pba->has_NEDE_trigger, storeidx);
