@@ -1,0 +1,635 @@
+diff --git a/source/perturbations.c b/source/perturbations.c
+index 15dccb01..3ddec888 100644
+--- a/source/perturbations.c
++++ b/source/perturbations.c
+@@ -369,6 +369,7 @@ int perturb_output_titles(
+       class_store_columntitle(titles, "eta", ppt->has_source_eta);
+       class_store_columntitle(titles, "eta_prime", ppt->has_source_eta_prime);
+       class_store_columntitle(titles, "H_T_Nb_prime", ppt->has_source_H_T_Nb_prime);
++      class_store_columntitle(titles, "H_T_Nb_prime", ppt->has_source_k2gamma_Nb);
+       class_store_columntitle(titles, "k2gamma_Nb", ppt->has_source_k2gamma_Nb);
+     }
+     if (ppt->has_velocity_transfers == _TRUE_)
+@@ -550,6 +551,7 @@ int perturb_init(
+ 
+   if (pba->has_NEDE && ppt->perturbations_verbose > 1)
+   {
++
+     printf("  -> NEDE perturbation details:\n");
+     if (ppt->NEDE_ceff_nature == NEDE_ceff_const)
+       printf("     -> 3*ceff2: %f (constant)\n", ppt->three_ceff2_NEDE);
+@@ -677,7 +679,6 @@ int perturb_init(
+     }
+   }
+ 
+-  /*
+   class_test((pba->h > _h_BIG_) || (pba->h < _h_SMALL_),
+              ppt->error_message,
+              "Your value of pba->h=%e is out of the bounds [%e , %e] and could cause a crash of the perturbation ODE integration. If you want to force this barrier, you may comment it out in perturbation.c",
+@@ -685,13 +686,12 @@ int perturb_init(
+              _h_SMALL_,
+              _h_BIG_);
+ 
+-  class_test((pba->Omega0_b*pba->h*pba->h < _omegab_SMALL_) || (pba->Omega0_b*pba->h*pba->h > _omegab_BIG_),
++  class_test((pba->Omega0_b * pba->h * pba->h < _omegab_SMALL_) || (pba->Omega0_b * pba->h * pba->h > _omegab_BIG_),
+              ppt->error_message,
+              "Your value of omega_b=%e is out of the bounds [%e , %e] and could cause a crash of the perturbation ODE integration. If you want to force this barrier, you may comment it out in perturbation.c",
+-             pba->Omega0_b*pba->h*pba->h,
++             pba->Omega0_b * pba->h * pba->h,
+              _omegab_SMALL_,
+              _omegab_BIG_);
+-  */
+ 
+   /** - initialize all indices and lists in perturbs structure using perturb_indices() */
+ 
+@@ -3856,6 +3856,7 @@ int perturb_vector_init(
+   double delta_trigger, theta_trigger;
+   double a_prime_over_a;
+   double delta_phi_over_phi_prime, sigma_NEDE;
++  double w_NEDE, dw_over_da_NEDE;
+ 
+   /** - allocate a new perturb_vector structure to which ppw-->pv will point at the end of the routine */
+ 
+@@ -3999,6 +4000,11 @@ int perturb_vector_init(
+         class_define_index(ppv->index_pt_theta_NEDE, _TRUE_, index_pt, 1);
+         /* NEDE pert sehar */
+         class_define_index(ppv->index_pt_shear_NEDE, _TRUE_, index_pt, 1);
++        if (pba->NEDE_fld_nature == NEDE_fld_B)
++        {
++          ppv->l_max_NEDE = ppr->l_max_NEDE;
++          class_define_index(ppv->index_pt_l3_NEDE, _TRUE_, index_pt, ppv->l_max_NEDE - 2); /* additional momenta in Boltzmann hierarchy (beyond l=0,1,2,3) */
++        }
+       }
+     }
+ 
+@@ -4261,6 +4267,16 @@ int perturb_vector_init(
+       }
+     }
+ 
++    if (pba->has_NEDE_pert == _TRUE_)
++    {
++
++      if ((ppw->approx[ppw->index_ap_sda] == (int)sda_off) && (ppw->approx[ppw->index_ap_CCa] == (int)CCa_off))
++      {
++        for (index_pt = ppv->index_pt_l3_NEDE; index_pt <= ppv->index_pt_delta_NEDE + ppv->l_max_NEDE; index_pt++)
++          ppv->used_in_sources[index_pt] = _FALSE_;
++      }
++    }
++
+     if (pba->has_idr == _TRUE_)
+     {
+ 
+@@ -4646,7 +4662,7 @@ int perturb_vector_init(
+         }
+ 
+         /*New EDE*/
+-        /*NEDE and trigger perturbations not affectecd by tight coupling approximation, so we just copy the values from the previous integration step.*/
++        /*NEDE and trigger perturbations not affected by tight coupling approximation, so we just copy the values from the previous integration step.*/
+         if (pba->has_NEDE_pert == _TRUE_)
+         {
+           if ((ppw->approx[ppw->index_ap_sda] == (int)sda_off) && (ppw->approx[ppw->index_ap_CCa] == (int)CCa_off))
+@@ -4659,6 +4675,17 @@ int perturb_vector_init(
+ 
+             ppv->y[ppv->index_pt_shear_NEDE] =
+                 ppw->pv->y[ppw->pv->index_pt_shear_NEDE];
++
++            if (pba->NEDE_fld_nature == NEDE_fld_B)
++            {
++
++              ppv->y[ppv->index_pt_l3_NEDE] =
++                  ppw->pv->y[ppw->pv->index_pt_l3_NEDE];
++
++              for (l = 4; l <= ppv->l_max_NEDE; l++)
++                ppv->y[ppv->index_pt_delta_NEDE + l] =
++                    ppw->pv->y[ppw->pv->index_pt_delta_NEDE + l];
++            }
+           }
+           if (pba->has_NEDE_trigger == _TRUE_)
+           {
+@@ -4755,7 +4782,7 @@ int perturb_vector_init(
+         }
+ 
+         /*New EDE*/
+-        /*NEDE and trigger perturbations not affectecd by radiation streaming approximation, so we just copy the values from the previous integration step.*/
++        /*NEDE and trigger perturbations not affected by radiation streaming approximation, so we just copy the values from the previous integration step.*/
+         if (pba->has_NEDE_pert == _TRUE_)
+         {
+           if ((ppw->approx[ppw->index_ap_sda] == (int)sda_off) && (ppw->approx[ppw->index_ap_CCa] == (int)CCa_off))
+@@ -4768,6 +4795,17 @@ int perturb_vector_init(
+ 
+             ppv->y[ppv->index_pt_shear_NEDE] =
+                 ppw->pv->y[ppw->pv->index_pt_shear_NEDE];
++
++            if (pba->NEDE_fld_nature == NEDE_fld_B)
++            {
++
++              ppv->y[ppv->index_pt_l3_NEDE] =
++                  ppw->pv->y[ppw->pv->index_pt_l3_NEDE];
++
++              for (l = 4; l <= ppv->l_max_NEDE; l++)
++                ppv->y[ppv->index_pt_delta_NEDE + l] =
++                    ppw->pv->y[ppw->pv->index_pt_delta_NEDE + l];
++            }
+           }
+           if (pba->has_NEDE_trigger == _TRUE_)
+           {
+@@ -4907,7 +4945,7 @@ int perturb_vector_init(
+             }
+           }
+           /*New EDE*/
+-          /*EDE and trigger perturbations not affectecd by ur fluid approximation, so we just copy the values from the previous integration step.*/
++          /*EDE and trigger perturbations not affected by ur fluid approximation, so we just copy the values from the previous integration step.*/
+           if (pba->has_NEDE_pert == _TRUE_)
+           {
+             if ((ppw->approx[ppw->index_ap_sda] == (int)sda_off) && (ppw->approx[ppw->index_ap_CCa] == (int)CCa_off))
+@@ -4920,6 +4958,17 @@ int perturb_vector_init(
+ 
+               ppv->y[ppv->index_pt_shear_NEDE] =
+                   ppw->pv->y[ppw->pv->index_pt_shear_NEDE];
++
++              if (pba->NEDE_fld_nature == NEDE_fld_B)
++              {
++
++                ppv->y[ppv->index_pt_l3_NEDE] =
++                    ppw->pv->y[ppw->pv->index_pt_l3_NEDE];
++
++                for (l = 4; l <= ppv->l_max_NEDE; l++)
++                  ppv->y[ppv->index_pt_delta_NEDE + l] =
++                      ppw->pv->y[ppw->pv->index_pt_delta_NEDE + l];
++              }
+             }
+             if (pba->has_NEDE_trigger == _TRUE_)
+             {
+@@ -5039,7 +5088,7 @@ int perturb_vector_init(
+             }
+           }
+           /*New EDE*/
+-          /*NEDE and trigger perturbations not affectecd by this approximation, so we just copy the values from the previous integration step.*/
++          /*NEDE and trigger perturbations not affected by this approximation, so we just copy the values from the previous integration step.*/
+           if (pba->has_NEDE_pert == _TRUE_)
+           {
+             if ((ppw->approx[ppw->index_ap_sda] == (int)sda_off) && (ppw->approx[ppw->index_ap_CCa] == (int)CCa_off))
+@@ -5052,6 +5101,17 @@ int perturb_vector_init(
+ 
+               ppv->y[ppv->index_pt_shear_NEDE] =
+                   ppw->pv->y[ppw->pv->index_pt_shear_NEDE];
++
++              if (pba->NEDE_fld_nature == NEDE_fld_B)
++              {
++
++                ppv->y[ppv->index_pt_l3_NEDE] =
++                    ppw->pv->y[ppw->pv->index_pt_l3_NEDE];
++
++                for (l = 4; l <= ppv->l_max_NEDE; l++)
++                  ppv->y[ppv->index_pt_delta_NEDE + l] =
++                      ppw->pv->y[ppw->pv->index_pt_delta_NEDE + l];
++              }
+             }
+             if (pba->has_NEDE_trigger == _TRUE_)
+             {
+@@ -5203,6 +5263,17 @@ int perturb_vector_init(
+ 
+               ppv->y[ppv->index_pt_shear_NEDE] =
+                   ppw->pv->y[ppw->pv->index_pt_shear_NEDE];
++
++              if (pba->NEDE_fld_nature == NEDE_fld_B)
++              {
++
++                ppv->y[ppv->index_pt_l3_NEDE] =
++                    ppw->pv->y[ppw->pv->index_pt_l3_NEDE];
++
++                for (l = 4; l <= ppv->l_max_NEDE; l++)
++                  ppv->y[ppv->index_pt_delta_NEDE + l] =
++                      ppw->pv->y[ppw->pv->index_pt_delta_NEDE + l];
++              }
+             }
+             if (pba->has_NEDE_trigger == _TRUE_)
+             {
+@@ -5321,6 +5392,17 @@ int perturb_vector_init(
+ 
+               ppv->y[ppv->index_pt_shear_NEDE] =
+                   ppw->pv->y[ppw->pv->index_pt_shear_NEDE];
++
++              if (pba->NEDE_fld_nature == NEDE_fld_B)
++              {
++
++                ppv->y[ppv->index_pt_l3_NEDE] =
++                    ppw->pv->y[ppw->pv->index_pt_l3_NEDE];
++
++                for (l = 4; l <= ppv->l_max_NEDE; l++)
++                  ppv->y[ppv->index_pt_delta_NEDE + l] =
++                      ppw->pv->y[ppw->pv->index_pt_delta_NEDE + l];
++              }
+             }
+             if (pba->has_NEDE_trigger == _TRUE_)
+             {
+@@ -5415,7 +5497,7 @@ int perturb_vector_init(
+         {
+ 
+           if (ppt->perturbations_verbose > 2)
+-            fprintf(stdout, "Mode k=%e: initialize EDE mode at tau=%e\n", k, tau);
++            fprintf(stdout, "Mode k=%e: initialize NEDE mode at tau=%e\n", k, tau);
+ 
+           if (ppw->approx[ppw->index_ap_rsa] == (int)rsa_off)
+           {
+@@ -5526,12 +5608,18 @@ int perturb_vector_init(
+           /*New EDE*/ /*important*/
+           /*Here, we set the matching conditions for EDE perturbations: before transition perturbations are zero and after transition they start with value set by fluctuation in transition surface / see Israel's equations in our paper*/
+ 
+-          /*Nothing needs to be done if NEDE is exrremly subdominant*/
++          /*Nothing needs to be done if NEDE is extremly subdominant*/
+           if (ppw->approx[ppw->index_ap_sda] == (int)sda_off)
+           {
+-
+             a = ppw->pvecback[pba->index_bg_a];
+             a_prime_over_a = ppw->pvecback[pba->index_bg_H] * a;
++
++            // class_call(background_w_NEDE(pba, a, &w_NEDE, &dw_over_da_NEDE), pba->error_message, ppt->error_message);
++
++            class_call(background_quantities_NEDE(pba, a, a_prime_over_a, NULL, NULL, &w_NEDE, &dw_over_da_NEDE, NULL),
++                       pba->error_message,
++                       pba->error_message);
++
+             if (pba->has_NEDE_trigger == _TRUE_)
+               delta_phi_over_phi_prime = ppw->pv->y[ppw->pv->index_pt_phi_trigger] / (ppw->pvecback[pba->index_bg_phi_prime_trigger]);
+             else
+@@ -5539,7 +5627,7 @@ int perturb_vector_init(
+ 
+             if (pba->Junction_tag == 0)
+             {
+-              // Here we use trivial mathcing conditions only to study their relevance. Not used for NEDE runs.
++              // Here we use trivial matching conditions only to study their relevance. Not used for NEDE runs.
+               amp_rel = 0.0;
+               sigma_NEDE = 0.0;
+             }
+@@ -5552,9 +5640,9 @@ int perturb_vector_init(
+ 
+             // printf("k: %f, aH: %f, h': %f, eta': %f, alpha1: %f, alpha2: %f \n",k,a_prime_over_a ,ppw->pvecmetric[ppw->index_mt_h_prime],ppw->pvecmetric[ppw->index_mt_eta_prime],(ppw->pvecmetric[ppw->index_mt_h_prime] + 6.0*ppw->pvecmetric[ppw->index_mt_eta_prime])/(2.0 *k*k),ppw->pvecmetric[ppw->index_mt_alpha]);
+ 
+-            ppv->y[ppv->index_pt_delta_NEDE] = -(3. + pba->three_eos_NEDE) * amp_rel * a_prime_over_a * delta_phi_over_phi_prime; // follows from junction conditions
++            ppv->y[ppv->index_pt_delta_NEDE] = -(3. + 3. * w_NEDE) * amp_rel * a_prime_over_a * delta_phi_over_phi_prime; // follows from junction conditions
+ 
+-            ppv->y[ppv->index_pt_theta_NEDE] = -1. / (3. + pba->three_eos_NEDE) * k * k / a_prime_over_a * ppv->y[ppv->index_pt_delta_NEDE]; // follows from junction conditions
++            ppv->y[ppv->index_pt_theta_NEDE] = -1. / (3. + 3. * w_NEDE) * k * k / a_prime_over_a * ppv->y[ppv->index_pt_delta_NEDE]; // follows from junction conditions
+ 
+             // if (k<0.04 && k>0.03)
+             // printf("v1: %f, v2: %f, v3: %E",k,ppw->pv->y[ppw->pv->index_pt_phi_scf], ppw->pvecback[pba->index_bg_phi_prime_scf]);
+@@ -5562,6 +5650,15 @@ int perturb_vector_init(
+             // printf("z: %f and k: %f and delta_NEDE: %f and theta_EDE: %f \n",1./a-1,k,ppv->y[ppv->index_pt_delta_NEDE],ppv->y[ppv->index_pt_theta_EDE]);
+ 
+             ppv->y[ppv->index_pt_shear_NEDE] = sigma_NEDE;
++
++            if (pba->NEDE_fld_nature == NEDE_fld_B)
++            {
++
++              ppv->y[ppv->index_pt_l3_NEDE] = 0.0;
++
++              for (l = 4; l <= ppv->l_max_NEDE; l++)
++                ppv->y[ppv->index_pt_delta_NEDE + l] = 0.0;
++            }
+           }
+ 
+           /* New EDE */ /*Trigger field evolution stops at transition, no values need to be copied.*/
+@@ -5590,7 +5687,7 @@ int perturb_vector_init(
+         {
+ 
+           if (ppt->perturbations_verbose > 2)
+-            fprintf(stdout, "Mode k=%e: switch off EDE CC approximation at tau=%e\n", k, tau);
++            fprintf(stdout, "Mode k=%e: switch off NEDE CC approximation at tau=%e\n", k, tau);
+ 
+           if (ppw->approx[ppw->index_ap_rsa] == (int)rsa_off)
+           {
+@@ -6415,7 +6512,7 @@ int perturb_initial_conditions(struct precision *ppr,
+ 
+         class_call(background_w_fld(pba, a, &w_fld, &dw_over_da_fld, &integral_fld), pba->error_message, ppt->error_message);
+ 
+-        ppw->pv->y[ppw->pv->index_pt_delta_fld] -= 3 * (1. + w_fld) * a_prime_over_a * alpha;
++        ppw->pv->y[ppw->pv->index_pt_delta_fld] += 3 * (1. + w_fld) * a_prime_over_a * alpha;
+         ppw->pv->y[ppw->pv->index_pt_theta_fld] += k * k * alpha;
+       }
+ 
+@@ -6440,7 +6537,7 @@ int perturb_initial_conditions(struct precision *ppr,
+         {
+           alpha_prime = 0.0;
+           /* - 2. * a_prime_over_a * alpha + eta
+-             - 4.5 * (a2/k2) * ppw->rho_plus_p_shear; */
++       - 4.5 * (a2/k2) * ppw->rho_plus_p_shear; */
+ 
+           ppw->pv->y[ppw->pv->index_pt_phi_trigger] += alpha * ppw->pvecback[pba->index_bg_phi_prime_trigger];
+           ppw->pv->y[ppw->pv->index_pt_phi_prime_trigger] +=
+@@ -7438,6 +7535,7 @@ int perturb_total_stress_energy(
+   /** - define local variables */
+ 
+   double a, a2, a_prime_over_a, k2;
++  double rho_plus_p_tot = 0.;
+   double rho_m = 0.;
+   double delta_rho_m = 0.;
+   double rho_plus_p_m = 0.;
+@@ -7479,6 +7577,8 @@ int perturb_total_stress_energy(
+   double theta_NEDE = 0.;
+   double shear_NEDE = 0.;
+   double delta_rho_trigger, delta_p_trigger;
++  double w_NEDE, dw_over_da_NEDE;
++  double ca2_NEDE, cs2_NEDE, w_prime_NEDE;
+ 
+   /** - wavenumber and scale factor related quantities */
+ 
+@@ -7852,16 +7952,44 @@ int perturb_total_stress_energy(
+     /*Here the NEDE contribution to the perturbed EMT is calculated. Note that we excluded the CC phase as there are no contributions in that case. This part is important as it describes the feedback of the EDE pert. into the gravitational sector. */
+     if (pba->has_NEDE_pert == _TRUE_)
+     {
++
+       if ((ppw->approx[ppw->index_ap_CCa] == (int)CCa_off) && (ppw->approx[ppw->index_ap_sda] == (int)sda_off))
+       {
++
++        // class_call(background_w_NEDE(pba, a, &w_NEDE, &dw_over_da_NEDE), pba->error_message, ppt->error_message);
++        // w_prime_NEDE = dw_over_da_NEDE * a_prime_over_a * a;
++
++        class_call(background_quantities_NEDE(pba, a, a_prime_over_a, NULL, NULL, &w_NEDE, &dw_over_da_NEDE, &ca2_NEDE),
++                   pba->error_message,
++                   pba->error_message);
++        w_prime_NEDE = dw_over_da_NEDE * a_prime_over_a * a;
++        /** Decide if effective rest-frame sound speed is constant or tracking the adiabatic sound speed (note that w_NEDE=const). */
++
++        if (pba->NEDE_fld_nature == NEDE_fld_A)
++        {
++          if (ppt->NEDE_ceff_nature == NEDE_ceff_const)
++            cs2_NEDE = ppt->three_ceff2_NEDE / 3.;
++          else
++            cs2_NEDE = ca2_NEDE;
++        }
++        else if (pba->NEDE_fld_nature == NEDE_fld_B)
++        {
++          // ca2_NEDE = w_NEDE;
++          cs2_NEDE = w_NEDE;
++        }
++        else if (pba->NEDE_fld_nature == NEDE_fld_BIII)
++        {
++          cs2_NEDE = ca2_NEDE;
++        }
++
+         ppw->delta_rho = ppw->delta_rho + ppw->pvecback[pba->index_bg_rho_NEDE] * delta_NEDE;
+ 
+-        ppw->rho_plus_p_theta = ppw->rho_plus_p_theta + (1. + pba->three_eos_NEDE / 3.) * ppw->pvecback[pba->index_bg_rho_NEDE] * theta_NEDE;
++        ppw->rho_plus_p_theta = ppw->rho_plus_p_theta + (1. + w_NEDE) * ppw->pvecback[pba->index_bg_rho_NEDE] * theta_NEDE;
+ 
+-        ppw->rho_plus_p_shear = ppw->rho_plus_p_shear + (1. + pba->three_eos_NEDE / 3.) * ppw->pvecback[pba->index_bg_rho_NEDE] * shear_NEDE;
++        ppw->rho_plus_p_shear = ppw->rho_plus_p_shear + (1. + w_NEDE) * ppw->pvecback[pba->index_bg_rho_NEDE] * shear_NEDE;
+ 
+         /*Compare to  arXiv: astro-ph/9801234v2, Eq. 3 and thereafter; use dictionnary theta/k = v.*/
+-        ppw->delta_p += ppt->three_ceff2_NEDE / 3. * ppw->pvecback[pba->index_bg_rho_NEDE] * delta_NEDE + (ppt->three_ceff2_NEDE / 3. - pba->three_eos_NEDE / 3.) * (3. * a_prime_over_a * ((1. + pba->three_eos_NEDE / 3.) * ppw->pvecback[pba->index_bg_rho_NEDE] * theta_NEDE) / k / k);
++        ppw->delta_p += cs2_NEDE * ppw->pvecback[pba->index_bg_rho_NEDE] * delta_NEDE + (cs2_NEDE - ca2_NEDE) * (3. * a_prime_over_a * ((1. + w_NEDE) * ppw->pvecback[pba->index_bg_rho_NEDE] * theta_NEDE) / k / k);
+ 
+         /* This part is implemented overly correct as first case cannot happen*/
+         if (1. / a - 1. > pba->z_decay)
+@@ -7870,7 +7998,7 @@ int perturb_total_stress_energy(
+         }
+         else
+         {
+-          ppw->rho_plus_p_tot += (1. + pba->three_eos_NEDE / 3.) * ppw->pvecback[pba->index_bg_rho_NEDE];
++          ppw->rho_plus_p_tot += (1. + w_NEDE) * ppw->pvecback[pba->index_bg_rho_NEDE];
+         }
+       }
+ 
+@@ -7965,8 +8093,8 @@ int perturb_total_stress_energy(
+         s2sq = ppw->s_l[2] * ppw->s_l[2];
+         c_gamma_k_H_square = pow(pba->c_gamma_over_c_fld * k / a_prime_over_a, 2) * pba->cs2_fld;
+         /** The equation is too stiff for Runge-Kutta when c_gamma_k_H_square is large.
+-            Use the asymptotic solution Gamma=Gamma'=0 in that case.
+-        */
++      Use the asymptotic solution Gamma=Gamma'=0 in that case.
++  */
+         if (c_gamma_k_H_square > ppr->c_gamma_k_H_square_max)
+           Gamma_fld = 0.;
+         else
+@@ -8005,7 +8133,7 @@ int perturb_total_stress_energy(
+ 
+         /** Now construct the pressure perturbation, see 1903.xxxxx. */
+         /** Construct energy density and pressure for DE (_fld) and the rest (_t).
+-            Also compute derivatives. */
++      Also compute derivatives. */
+         rho_fld = ppw->pvecback[pba->index_bg_rho_fld];
+         p_fld = w_fld * rho_fld;
+         rho_fld_prime = -3 * a_prime_over_a * (rho_fld + p_fld);
+@@ -8047,7 +8175,7 @@ int perturb_total_stress_energy(
+ 
+     /* store delta_m in the current gauge. In perturb_einstein, this
+        will be transformed later on into the gauge-independent variable D
+-       = delta_m + 3 a H \theta_m/k^2 .  */
++       = delta_m - 2H'/H \theta_m/k^2 .  */
+ 
+     if (ppt->has_source_delta_m == _TRUE_)
+       ppw->delta_m = delta_rho_m / rho_m;
+@@ -8239,9 +8367,11 @@ int perturb_sources(
+ 
+   double a_rel, a2_rel, f_dr;
+ 
+-  double H_T_Nb_prime = 0., rho_tot;
++  double rho_plus_p_tot, H_T_Nb_prime = 0., rho_tot;
+   double theta_over_k2, theta_shift;
+ 
++  double w_NEDE, dw_over_da_NEDE;
++
+   /** - rename structure fields (just to avoid heavy notations) */
+ 
+   pppaw = parameters_and_workspace;
+@@ -8400,35 +8530,25 @@ int perturb_sources(
+ 
+     /* now, non-CMB sources */
+ 
+-    if ((ppt->has_Nbody_gauge_transfers == _TRUE_) || (ppt->has_source_H_T_Nb_prime == _TRUE_) || (ppt->has_source_k2gamma_Nb == _TRUE_))
++    /* H_T_prime in N-body gauge. (H_T=3zeta where zeta is the comoving curvature perturbation.).
++       See equation A.5 in 1811.00904.*/
++    if (ppt->has_source_H_T_Nb_prime == _TRUE_)
+     {
+-
+-      /* H_T_prime in N-body gauge. (H_T=3zeta where zeta is the comoving curvature perturbation.).
+-         See equation A.5 in 1811.00904.*/
+-      H_T_Nb_prime = 3 * a_prime_over_a / ppw->rho_plus_p_tot * (-ppw->delta_p + pvecback[pba->index_bg_p_tot_prime] * ppw->rho_plus_p_theta / ppw->rho_plus_p_tot / k / k + ppw->rho_plus_p_shear);
+-      if (ppt->has_source_H_T_Nb_prime == _TRUE_)
+-      {
+-        _set_source_(ppt->index_tp_H_T_Nb_prime) = H_T_Nb_prime;
+-      }
+-
+-      /** gamma in N-body gauge. Eq. A.2 in 1811.00904 gives k2gamma =
+-          (a'/a)H_T' + k2(phi-psi) - H_T''. The last term is cubersome
+-          to calculate (one would need finite derivatives) but usually
+-          small. Here we only compute an approximate k2gamma without
+-          this last term. If needed, the term could be restored: you
+-          can see how T. Tram did it in a previous commit
+-          beec79548877e1e43403d1f4de5ddee6741a3c16 (28.02.2019) - then
+-          it had to go to spectra.c, now it could stay in this
+-          module. Later this feature was removed for simplicity. Note
+-          that to compute the transfer functions in the N-body gauge
+-          we do not need k2gamma anyway. */
+-
++      rho_plus_p_tot = (pvecback[pba->index_bg_rho_tot] + pvecback[pba->index_bg_p_tot]);
++      H_T_Nb_prime = 3 * a_prime_over_a / rho_plus_p_tot * (-ppw->delta_p + pvecback[pba->index_bg_p_tot_prime] * ppw->rho_plus_p_theta / rho_plus_p_tot / k / k + ppw->rho_plus_p_shear);
++      _set_source_(ppt->index_tp_H_T_Nb_prime) = H_T_Nb_prime;
++      /** gamma in Nbody gauge, see Eq. A.2 in 1811.00904. */
+       if (ppt->has_source_k2gamma_Nb == _TRUE_)
+       {
+         _set_source_(ppt->index_tp_k2gamma_Nb) = -a_prime_over_a * H_T_Nb_prime + 9. / 2. * a2_rel * ppw->rho_plus_p_shear;
+       }
+     }
+ 
++    if (ppt->has_source_k2gamma_Nb == _TRUE_)
++    {
++      class_stop(ppt->error_message, "We need to compute the derivative of H_T_Nb_prime numerically. Written by T. Tram but not yet propagated here. See devel branch prior to merging with hmcode branch");
++    }
++
+     /* Bardeen potential -PHI_H = phi in Newtonian gauge */
+     if (ppt->has_source_phi == _TRUE_)
+     {
+@@ -8510,7 +8630,7 @@ int perturb_sources(
+     /* compute the corrections that have to be applied to each (delta_i, theta_i) in N-body gauge */
+     if (ppt->has_Nbody_gauge_transfers == _TRUE_)
+     {
+-      theta_over_k2 = ppw->rho_plus_p_theta / ppw->rho_plus_p_tot / k / k;
++      theta_over_k2 = ppw->rho_plus_p_theta / (pvecback[pba->index_bg_rho_tot] + pvecback[pba->index_bg_p_tot]);
+       theta_shift = H_T_Nb_prime;
+       if (ppt->gauge == synchronous)
+         theta_shift += pvecmetric[ppw->index_mt_alpha] * k * k;
+@@ -8606,8 +8726,14 @@ int perturb_sources(
+     /*This part is relevant if we need non CMB sources (so far never used)*/
+     if (ppt->has_source_delta_NEDE == _TRUE_)
+     {
++      // class_call(background_w_NEDE(pba, a_rel * pba->a_today, &w_NEDE, &dw_over_da_NEDE), pba->error_message, ppt->error_message);
++
++      class_call(background_quantities_NEDE(pba, a_rel, a_prime_over_a, NULL, NULL, &w_NEDE, &dw_over_da_NEDE, NULL),
++                 pba->error_message,
++                 pba->error_message);
++
+       if ((ppw->approx[ppw->index_ap_sda] == (int)sda_off) && (ppw->approx[ppw->index_ap_CCa] == (int)CCa_off))
+-        _set_source_(ppt->index_tp_delta_NEDE) = y[ppw->pv->index_pt_delta_NEDE] + 3. * a_prime_over_a * (1. + pba->three_eos_NEDE / 3.) * theta_over_k2; // N-body gauge correction
++        _set_source_(ppt->index_tp_delta_NEDE) = y[ppw->pv->index_pt_delta_NEDE] + 3. * a_prime_over_a * (1. + w_NEDE) * theta_over_k2; // N-body gauge correction
+       else
+         _set_source_(ppt->index_tp_delta_NEDE) = 0.0;
+     }
+@@ -9042,7 +9168,6 @@ int perturb_print_variables(double tau,
+ 
+           rho_plus_p_theta_trigger = 1. / 3. *
+                                      k * k / a2 * ppw->pvecback[pba->index_bg_phi_prime_trigger] * y[ppw->pv->index_pt_phi_trigger];
+-
+           delta_trigger = delta_rho_trigger / pvecback[pba->index_bg_rho_trigger];
+           theta_trigger = rho_plus_p_theta_trigger / (pvecback[pba->index_bg_rho_trigger] + pvecback[pba->index_bg_p_trigger]);
+         }
+@@ -9605,7 +9730,8 @@ int perturb_derivs(double tau,
+ 
+   double Sinv = 0., dmu_idm_dr = 0., dmu_idr = 0., tca_slip_idm_dr = 0.;
+ 
+-  double cs2_NEDE;
++  double cs2_NEDE, ca2_NEDE;
++  double w_NEDE, dw_over_da_NEDE, w_prime_NEDE;
+ 
+   /** - rename the fields of the input structure (just to avoid heavy notations) */
+ 
+@@ -10384,33 +10510,80 @@ int perturb_derivs(double tau,
+ 
+     if (pba->has_NEDE_pert == _TRUE_)
+     {
+-
+       if ((ppw->approx[ppw->index_ap_sda] == (int)sda_off) && (ppw->approx[ppw->index_ap_CCa] == (int)CCa_off))
+       {
++        // class_call(background_w_NEDE(pba, a, &w_NEDE, &dw_over_da_NEDE), pba->error_message, ppt->error_message);
++
++        class_call(background_quantities_NEDE(pba, a, a_prime_over_a, NULL, NULL, &w_NEDE, &dw_over_da_NEDE, &ca2_NEDE),
++                   pba->error_message,
++                   pba->error_message);
++        w_prime_NEDE = dw_over_da_NEDE * a_prime_over_a * a;
+ 
+         /** Decide if effective rest-frame sound speed is constant or tracking the adiabatic sound speed (note that w_NEDE=const). */
+ 
+-        if (ppt->NEDE_ceff_nature == NEDE_ceff_const)
++        if (pba->NEDE_fld_nature == NEDE_fld_A)
+         {
+-          cs2_NEDE = ppt->three_ceff2_NEDE / 3.;
++          // ca2_NEDE = w_NEDE - w_prime_NEDE / 3. / (1. + w_NEDE) / a_prime_over_a;
++          if (ppt->NEDE_ceff_nature == NEDE_ceff_const)
++            cs2_NEDE = ppt->three_ceff2_NEDE / 3.;
++          else
++            cs2_NEDE = ca2_NEDE;
+         }
+-        else
+-          cs2_NEDE = pba->three_eos_NEDE / 3.;
++        else if (pba->NEDE_fld_nature == NEDE_fld_B)
++        {
++          // ca2_NEDE = w_NEDE;
++          cs2_NEDE = w_NEDE;
++        }
++        else if (pba->NEDE_fld_nature == NEDE_fld_BIII)
++        {
++          cs2_NEDE = ca2_NEDE;
++          // printf("cs2: %f",cs2_NEDE);
++        }
++
++        /** - ----> NEDE density */
+ 
+-        /** - -----> NEDE density */
+         dy[pv->index_pt_delta_NEDE] =
+-            -(1. + pba->three_eos_NEDE / 3.) * (y[pv->index_pt_theta_NEDE] + metric_continuity) + (pba->three_eos_NEDE - 3. * cs2_NEDE) * a_prime_over_a * (y[pv->index_pt_delta_NEDE] + (3. + pba->three_eos_NEDE) * a_prime_over_a * y[pv->index_pt_theta_NEDE] / k / k);
+-        // metric_continuity = h'/2
++            -(1. + w_NEDE) * (y[pv->index_pt_theta_NEDE] + metric_continuity) - 3. * (cs2_NEDE - w_NEDE) * a_prime_over_a * y[pv->index_pt_delta_NEDE] - 9. * (1 + w_NEDE) * (cs2_NEDE - ca2_NEDE) * a_prime_over_a * a_prime_over_a * y[pv->index_pt_theta_NEDE] / k2;
+ 
+-        /** - -----> NEDE velocity */
++        /** - ----> NEDE velocity */
+         dy[pv->index_pt_theta_NEDE] =
+-            k2 * (3. * cs2_NEDE * y[pv->index_pt_delta_NEDE] / (3. + pba->three_eos_NEDE) - s2_squared * y[pv->index_pt_shear_NEDE]) + metric_euler - (1. - 3. * cs2_NEDE) * a_prime_over_a * y[pv->index_pt_theta_NEDE];
+-        // metric_euler=0 in synchronous gauge and s2_squared = 1 without spatial curvature. //Shear term vanishes in standard NEDE scenario.
++            -(1. - 3. * cs2_NEDE) * a_prime_over_a * y[pv->index_pt_theta_NEDE] + cs2_NEDE * k2 / (1. + w_NEDE) * y[pv->index_pt_delta_NEDE] + metric_euler - k2 * y[pv->index_pt_shear_NEDE];
++        if (pba->NEDE_fld_nature == NEDE_fld_B)
++          dy[pv->index_pt_theta_NEDE] -= w_prime_NEDE / (w_NEDE + 1.) * y[pv->index_pt_theta_NEDE];
+ 
+         /* Shear, only relevant for cvis2 non-vanishing, in other cases sigma_NEDE=0 all the time. */
+-        dy[pv->index_pt_shear_NEDE] =
+-            -3. * a_prime_over_a * y[pv->index_pt_shear_NEDE] + 8. / 3. * ppt->three_cvis2_NEDE / (pba->three_eos_NEDE + 3.) * (y[pv->index_pt_theta_NEDE] + metric_shear);
+-        // metric_shear = (h_prime+6eta_prime)/2 in synchronous gauge
++
++        if ((pba->NEDE_fld_nature == NEDE_fld_A) || (pba->NEDE_fld_nature == NEDE_fld_BIII))
++        {
++          dy[pv->index_pt_shear_NEDE] =
++              -3. * a_prime_over_a * y[pv->index_pt_shear_NEDE] + 8. / 3. * ppt->three_cvis2_NEDE / (3. * w_NEDE + 3.) * (y[pv->index_pt_theta_NEDE] + metric_shear);
++          // metric_shear = (h_prime+6eta_prime)/2 in synchronous gauge}
++        }
++        else if (pba->NEDE_fld_nature == NEDE_fld_B)
++        {
++          dy[pv->index_pt_shear_NEDE] =
++              -2. * (1. - 3. * w_NEDE) / (1. + w_NEDE) * a_prime_over_a * y[pv->index_pt_shear_NEDE] + 2. / 15. * (6 * w_NEDE * y[pv->index_pt_theta_NEDE] - 9. / 4. * y[pv->index_pt_l3_NEDE]) + metric_shear * 4. / 15. / (1. + w_NEDE) * w_NEDE * (5. - 3. * w_NEDE);
++
++          /** - -----> exact NEDE l=3 */
++
++          l = 3;
++          dy[pv->index_pt_l3_NEDE] =
++              -(1. - 3. * w_NEDE) * (w_NEDE + 3.) / (w_NEDE + 1.) * a_prime_over_a * y[pv->index_pt_l3_NEDE] + k / (2. * l + 1.) * (l * 6. * w_NEDE * s_l[l] * s_l[2] * y[pv->index_pt_shear_NEDE] - (l + 1.) * s_l[l + 1] * y[pv->index_pt_l3_NEDE + 1]);
++
++          /** - -----> exact NEDE l>3 */
++
++          for (l = 4; l < pv->l_max_NEDE; l++)
++          {
++            dy[pv->index_pt_delta_NEDE + l] =
++                +(1. - 3. * w_NEDE) * ((2. - l) * w_NEDE - l) / (w_NEDE + 1.) * a_prime_over_a * y[pv->index_pt_delta_NEDE + l] + k / (2. * l + 1) * (l * 3 * w_NEDE * s_l[l] * y[pv->index_pt_delta_NEDE + l - 1] - (l + 1.) * s_l[l + 1] * y[pv->index_pt_delta_NEDE + l + 1]);
++          }
++
++          /** - -----> exact NEDE lmax_NEDE */
++
++          l = pv->l_max_NEDE;
++          dy[pv->index_pt_delta_NEDE + l] =
++              +(1. - 3. * w_NEDE) * ((2. - l) * w_NEDE - l) / (w_NEDE + 1.) * a_prime_over_a * y[pv->index_pt_delta_NEDE + l] + k * (s_l[l] * 3 * w_NEDE * y[pv->index_pt_delta_NEDE + l - 1] - (1. + l) * cotKgen * y[pv->index_pt_delta_NEDE + l]);
++        }
+       }
+ 
+       /** - ---> trigger field */
+@@ -11097,13 +11270,11 @@ int perturb_rsa_delta_and_theta(
+   /* update total delta and theta given rsa approximation results */
+ 
+   ppw->delta_rho += ppw->pvecback[pba->index_bg_rho_g] * ppw->rsa_delta_g;
+-  ppw->delta_p += 1. / 3. * ppw->pvecback[pba->index_bg_rho_g] * ppw->rsa_delta_g;
+   ppw->rho_plus_p_theta += 4. / 3. * ppw->pvecback[pba->index_bg_rho_g] * ppw->rsa_theta_g;
+ 
+   if (pba->has_ur == _TRUE_)
+   {
+     ppw->delta_rho += ppw->pvecback[pba->index_bg_rho_ur] * ppw->rsa_delta_ur;
+-    ppw->delta_p += 1. / 3. * ppw->pvecback[pba->index_bg_rho_ur] * ppw->rsa_delta_ur;
+     ppw->rho_plus_p_theta += 4. / 3. * ppw->pvecback[pba->index_bg_rho_ur] * ppw->rsa_theta_ur;
+   }
+ 

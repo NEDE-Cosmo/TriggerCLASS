@@ -1,0 +1,13 @@
+diff --git a/include/perturbations.h b/include/perturbations.h
+index 6ee8e659..4a35bd7a 100644
+--- a/include/perturbations.h
++++ b/include/perturbations.h
+@@ -589,6 +589,8 @@ struct perturb_vector
+   int index_pt_shear_NEDE;
+   int index_pt_delta_trigger;
+   int index_pt_rho_plus_p_theta_trigger;
++  int index_pt_l3_NEDE;
++  int l_max_NEDE;
+ 
+   /* perturbed recombination */
+   int index_pt_perturbed_recombination_delta_temp; /**< Gas temperature perturbation */

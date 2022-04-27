@@ -1,0 +1,31 @@
+diff --git a/include/input.h b/include/input.h
+index 85ceffce..df6fdc8a 100755
+--- a/include/input.h
++++ b/include/input.h
+@@ -157,7 +157,8 @@ enum target_names
+   Omega_scf,
+   Omega_ini_dcdm,
+   omega_ini_dcdm,
+-  sigma8
++  sigma8,
++  z_decay_NEDE
+ };
+ enum computation_stage
+ {
+@@ -169,7 +170,7 @@ enum computation_stage
+   cs_transfer,
+   cs_spectra
+ };
+-#define _NUM_TARGETS_ 7 // Keep this number as number of target_names
++#define _NUM_TARGETS_ 8 // Keep this number as number of target_names
+ 
+ struct input_pprpba
+ {
+@@ -305,7 +306,6 @@ extern "C"
+   int input_find_root(double *xzero,
+                       int *fevals,
+                       struct fzerofun_workspace *pfzw,
+-                      double tol,
+                       ErrorMsg errmsg);
+ 
+   int file_exists(const char *fname);
