@@ -1435,8 +1435,8 @@ int input_read_parameters(
     Omega_tot += pba->Omega0_NEDE;
     Omega_tot += pba->Omega0_trigger;
 
-    printf("h: %f, omega_b: %f, omega_cdm: %f, ns: %f, ln10^10As: %f, tau: %f, mass: %f \n", pba->h, pba->Omega0_b * pba->h * pba->h,
-           pba->Omega0_cdm * pba->h * pba->h, ppm->n_s, log(ppm->A_s / 1.e-10), pth->tau_reio);
+    /*printf("h: %f, omega_b: %f, omega_cdm: %f, ns: %f, ln10^10As: %f, tau: %f, mass: %f \n", pba->h, pba->Omega0_b * pba->h * pba->h,
+           pba->Omega0_cdm * pba->h * pba->h, ppm->n_s, log(ppm->A_s / 1.e-10), pth->tau_reio);*/
   }
 
   /** - Omega_0_lambda (cosmological constant), Omega0_fld (dark energy fluid), Omega0_scf (scalar field) */
