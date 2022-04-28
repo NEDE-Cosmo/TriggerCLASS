@@ -3856,6 +3856,7 @@ int perturb_vector_init(
   double delta_trigger, theta_trigger;
   double a_prime_over_a;
   double delta_phi_over_phi_prime, sigma_NEDE;
+  double w_NEDE, dw_over_da_NEDE;
 
   /** - allocate a new perturb_vector structure to which ppw-->pv will point at the end of the routine */
 
@@ -5532,6 +5533,11 @@ int perturb_vector_init(
 
             a = ppw->pvecback[pba->index_bg_a];
             a_prime_over_a = ppw->pvecback[pba->index_bg_H] * a;
+
+            class_call(background_quantities_NEDE(pba, a, a_prime_over_a, NULL, NULL, &w_NEDE, &dw_over_da_NEDE, NULL),
+                       pba->error_message,
+                       pba->error_message);
+
             if (pba->has_NEDE_trigger == _TRUE_)
               delta_phi_over_phi_prime = ppw->pv->y[ppw->pv->index_pt_phi_trigger] / (ppw->pvecback[pba->index_bg_phi_prime_trigger]);
             else
@@ -5552,10 +5558,10 @@ int perturb_vector_init(
 
             // printf("k: %f, aH: %f, h': %f, eta': %f, alpha1: %f, alpha2: %f \n",k,a_prime_over_a ,ppw->pvecmetric[ppw->index_mt_h_prime],ppw->pvecmetric[ppw->index_mt_eta_prime],(ppw->pvecmetric[ppw->index_mt_h_prime] + 6.0*ppw->pvecmetric[ppw->index_mt_eta_prime])/(2.0 *k*k),ppw->pvecmetric[ppw->index_mt_alpha]);
 
-            ppv->y[ppv->index_pt_delta_NEDE] = -(3. + pba->three_eos_NEDE) * amp_rel * a_prime_over_a * delta_phi_over_phi_prime; // follows from junction conditions
+            /* Junction conditions, derived in 2006.06686*/
+            ppv->y[ppv->index_pt_delta_NEDE] = -(3. + 3. * w_NEDE) * amp_rel * a_prime_over_a * delta_phi_over_phi_prime;
 
-            ppv->y[ppv->index_pt_theta_NEDE] = -1. / (3. + pba->three_eos_NEDE) * k * k / a_prime_over_a * ppv->y[ppv->index_pt_delta_NEDE]; // follows from junction conditions
-
+            ppv->y[ppv->index_pt_theta_NEDE] = -1. / (3. + 3. * w_NEDE) * k * k / a_prime_over_a * ppv->y[ppv->index_pt_delta_NEDE];
             // if (k<0.04 && k>0.03)
             // printf("v1: %f, v2: %f, v3: %E",k,ppw->pv->y[ppw->pv->index_pt_phi_scf], ppw->pvecback[pba->index_bg_phi_prime_scf]);
 
@@ -5953,6 +5959,7 @@ int perturb_initial_conditions(struct precision *ppr,
   double fracnu, fracg, fracb, fraccdm, om;
   double ktau_two, ktau_three;
   double f_dr;
+  double w_NEDE;
 
   double delta_tot;
   double velocity_tot;
@@ -6439,12 +6446,20 @@ int perturb_initial_conditions(struct precision *ppr,
         if ((pba->has_NEDE_trigger == _TRUE_) && (ppw->approx[ppw->index_ap_CCa] == (int)CCa_on))
         {
           alpha_prime = 0.0;
-          /* - 2. * a_prime_over_a * alpha + eta
-             - 4.5 * (a2/k2) * ppw->rho_plus_p_shear; */
 
           ppw->pv->y[ppw->pv->index_pt_phi_trigger] += alpha * ppw->pvecback[pba->index_bg_phi_prime_trigger];
           ppw->pv->y[ppw->pv->index_pt_phi_prime_trigger] +=
               (-2. * a_prime_over_a * alpha * ppw->pvecback[pba->index_bg_phi_prime_trigger] - a * a * dV_trigger(pba, ppw->pvecback[pba->index_bg_phi_trigger]) * alpha + ppw->pvecback[pba->index_bg_phi_prime_trigger] * alpha_prime);
+        }
+
+        if (ppw->approx[ppw->index_ap_CCa] == (int)CCa_off) // This part is not relevant as NEDE is initialized at later times, we still included it for self-consistency.
+        {
+          class_call(background_quantities_NEDE(pba, a, a_prime_over_a, NULL, NULL, &w_NEDE, NULL, NULL),
+                     pba->error_message,
+                     pba->error_message);
+
+          ppw->pv->y[ppw->pv->index_pt_delta_NEDE] -= 3 * (1. + w_NEDE) * a_prime_over_a * alpha;
+          ppw->pv->y[ppw->pv->index_pt_theta_NEDE] += k * k * alpha;
         }
       }
 
@@ -7479,6 +7494,8 @@ int perturb_total_stress_energy(
   double theta_NEDE = 0.;
   double shear_NEDE = 0.;
   double delta_rho_trigger, delta_p_trigger;
+  double w_NEDE, dw_over_da_NEDE;
+  double ca2_NEDE, cs2_NEDE, w_prime_NEDE;
 
   /** - wavenumber and scale factor related quantities */
 
@@ -7854,14 +7871,29 @@ int perturb_total_stress_energy(
     {
       if ((ppw->approx[ppw->index_ap_CCa] == (int)CCa_off) && (ppw->approx[ppw->index_ap_sda] == (int)sda_off))
       {
+
+        class_call(background_quantities_NEDE(pba, a, a_prime_over_a, NULL, NULL, &w_NEDE, &dw_over_da_NEDE, &ca2_NEDE),
+                   pba->error_message,
+                   pba->error_message);
+        w_prime_NEDE = dw_over_da_NEDE * a_prime_over_a * a;
+        /** Decide if effective rest-frame sound speed is constant or tracking the adiabatic sound speed (note that w_NEDE=const). */
+
+        if (pba->NEDE_fld_nature == NEDE_fld_A)
+        {
+          if (ppt->NEDE_ceff_nature == NEDE_ceff_const)
+            cs2_NEDE = ppt->three_ceff2_NEDE / 3.;
+          else
+            cs2_NEDE = ca2_NEDE;
+        }
+
         ppw->delta_rho = ppw->delta_rho + ppw->pvecback[pba->index_bg_rho_NEDE] * delta_NEDE;
 
-        ppw->rho_plus_p_theta = ppw->rho_plus_p_theta + (1. + pba->three_eos_NEDE / 3.) * ppw->pvecback[pba->index_bg_rho_NEDE] * theta_NEDE;
+        ppw->rho_plus_p_theta = ppw->rho_plus_p_theta + (1. + w_NEDE) * ppw->pvecback[pba->index_bg_rho_NEDE] * theta_NEDE;
 
-        ppw->rho_plus_p_shear = ppw->rho_plus_p_shear + (1. + pba->three_eos_NEDE / 3.) * ppw->pvecback[pba->index_bg_rho_NEDE] * shear_NEDE;
+        ppw->rho_plus_p_shear = ppw->rho_plus_p_shear + (1. + w_NEDE) * ppw->pvecback[pba->index_bg_rho_NEDE] * shear_NEDE;
 
         /*Compare to  arXiv: astro-ph/9801234v2, Eq. 3 and thereafter; use dictionnary theta/k = v.*/
-        ppw->delta_p += ppt->three_ceff2_NEDE / 3. * ppw->pvecback[pba->index_bg_rho_NEDE] * delta_NEDE + (ppt->three_ceff2_NEDE / 3. - pba->three_eos_NEDE / 3.) * (3. * a_prime_over_a * ((1. + pba->three_eos_NEDE / 3.) * ppw->pvecback[pba->index_bg_rho_NEDE] * theta_NEDE) / k / k);
+        ppw->delta_p += cs2_NEDE * ppw->pvecback[pba->index_bg_rho_NEDE] * delta_NEDE + (cs2_NEDE - ca2_NEDE) * (3. * a_prime_over_a * ((1. + w_NEDE) * ppw->pvecback[pba->index_bg_rho_NEDE] * theta_NEDE) / k / k);
 
         /* This part is implemented overly correct as first case cannot happen*/
         if (1. / a - 1. > pba->z_decay)
@@ -7870,7 +7902,7 @@ int perturb_total_stress_energy(
         }
         else
         {
-          ppw->rho_plus_p_tot += (1. + pba->three_eos_NEDE / 3.) * ppw->pvecback[pba->index_bg_rho_NEDE];
+          ppw->rho_plus_p_tot += (1. + w_NEDE) * ppw->pvecback[pba->index_bg_rho_NEDE];
         }
       }
 
@@ -8241,6 +8273,7 @@ int perturb_sources(
 
   double H_T_Nb_prime = 0., rho_tot;
   double theta_over_k2, theta_shift;
+  double w_NEDE, dw_over_da_NEDE;
 
   /** - rename structure fields (just to avoid heavy notations) */
 
@@ -8606,8 +8639,11 @@ int perturb_sources(
     /*This part is relevant if we need non CMB sources (so far never used)*/
     if (ppt->has_source_delta_NEDE == _TRUE_)
     {
+      class_call(background_quantities_NEDE(pba, a_rel, a_prime_over_a, NULL, NULL, &w_NEDE, &dw_over_da_NEDE, NULL),
+                 pba->error_message,
+                 pba->error_message);
       if ((ppw->approx[ppw->index_ap_sda] == (int)sda_off) && (ppw->approx[ppw->index_ap_CCa] == (int)CCa_off))
-        _set_source_(ppt->index_tp_delta_NEDE) = y[ppw->pv->index_pt_delta_NEDE] + 3. * a_prime_over_a * (1. + pba->three_eos_NEDE / 3.) * theta_over_k2; // N-body gauge correction
+        _set_source_(ppt->index_tp_delta_NEDE) = y[ppw->pv->index_pt_delta_NEDE] + 3. * a_prime_over_a * (1. + w_NEDE) * theta_over_k2; // N-body gauge correction
       else
         _set_source_(ppt->index_tp_delta_NEDE) = 0.0;
     }
@@ -9605,7 +9641,8 @@ int perturb_derivs(double tau,
 
   double Sinv = 0., dmu_idm_dr = 0., dmu_idr = 0., tca_slip_idm_dr = 0.;
 
-  double cs2_NEDE;
+  double cs2_NEDE, ca2_NEDE;
+  double w_NEDE, dw_over_da_NEDE, w_prime_NEDE;
 
   /** - rename the fields of the input structure (just to avoid heavy notations) */
 
@@ -10388,28 +10425,36 @@ int perturb_derivs(double tau,
       if ((ppw->approx[ppw->index_ap_sda] == (int)sda_off) && (ppw->approx[ppw->index_ap_CCa] == (int)CCa_off))
       {
 
+        class_call(background_quantities_NEDE(pba, a, a_prime_over_a, NULL, NULL, &w_NEDE, &dw_over_da_NEDE, &ca2_NEDE),
+                   pba->error_message,
+                   pba->error_message);
+        w_prime_NEDE = dw_over_da_NEDE * a_prime_over_a * a;
+
+        /*The NEDE implementation so far assumes w_prime_NEDE=0*/
+
         /** Decide if effective rest-frame sound speed is constant or tracking the adiabatic sound speed (note that w_NEDE=const). */
 
-        if (ppt->NEDE_ceff_nature == NEDE_ceff_const)
+        if (pba->NEDE_fld_nature == NEDE_fld_A)
         {
-          cs2_NEDE = ppt->three_ceff2_NEDE / 3.;
+          if (ppt->NEDE_ceff_nature == NEDE_ceff_const)
+            cs2_NEDE = ppt->three_ceff2_NEDE / 3.;
+          else
+            cs2_NEDE = ca2_NEDE;
         }
-        else
-          cs2_NEDE = pba->three_eos_NEDE / 3.;
 
         /** - -----> NEDE density */
         dy[pv->index_pt_delta_NEDE] =
-            -(1. + pba->three_eos_NEDE / 3.) * (y[pv->index_pt_theta_NEDE] + metric_continuity) + (pba->three_eos_NEDE - 3. * cs2_NEDE) * a_prime_over_a * (y[pv->index_pt_delta_NEDE] + (3. + pba->three_eos_NEDE) * a_prime_over_a * y[pv->index_pt_theta_NEDE] / k / k);
+            -(1. + w_NEDE) * (y[pv->index_pt_theta_NEDE] + metric_continuity) - 3. * (cs2_NEDE - w_NEDE) * a_prime_over_a * y[pv->index_pt_delta_NEDE] - 9. * (1 + w_NEDE) * (cs2_NEDE - ca2_NEDE) * a_prime_over_a * a_prime_over_a * y[pv->index_pt_theta_NEDE] / k2;
         // metric_continuity = h'/2
 
         /** - -----> NEDE velocity */
         dy[pv->index_pt_theta_NEDE] =
-            k2 * (3. * cs2_NEDE * y[pv->index_pt_delta_NEDE] / (3. + pba->three_eos_NEDE) - s2_squared * y[pv->index_pt_shear_NEDE]) + metric_euler - (1. - 3. * cs2_NEDE) * a_prime_over_a * y[pv->index_pt_theta_NEDE];
+            k2 * (3. * cs2_NEDE * y[pv->index_pt_delta_NEDE] / (3. + 3. * w_NEDE) - s2_squared * y[pv->index_pt_shear_NEDE]) + metric_euler - (1. - 3. * cs2_NEDE) * a_prime_over_a * y[pv->index_pt_theta_NEDE];
         // metric_euler=0 in synchronous gauge and s2_squared = 1 without spatial curvature. //Shear term vanishes in standard NEDE scenario.
 
         /* Shear, only relevant for cvis2 non-vanishing, in other cases sigma_NEDE=0 all the time. */
         dy[pv->index_pt_shear_NEDE] =
-            -3. * a_prime_over_a * y[pv->index_pt_shear_NEDE] + 8. / 3. * ppt->three_cvis2_NEDE / (pba->three_eos_NEDE + 3.) * (y[pv->index_pt_theta_NEDE] + metric_shear);
+            -3. * a_prime_over_a * y[pv->index_pt_shear_NEDE] + 8. / 3. * ppt->three_cvis2_NEDE / (3. * w_NEDE + 3.) * (y[pv->index_pt_theta_NEDE] + metric_shear);
         // metric_shear = (h_prime+6eta_prime)/2 in synchronous gauge
       }
 

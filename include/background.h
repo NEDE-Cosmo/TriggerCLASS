@@ -14,8 +14,15 @@
 #define _class_print_species_(name, type) \
     printf("-> %-30s Omega = %-15g , omega = %-15g\n", name, pba->Omega0_##type, pba->Omega0_##type * pba->h * pba->h);
 
-/** list of possible types of spatial curvature */
+/** Nature of NEDE fluid */
+enum NEDE_fld_nature
+{
+    NEDE_fld_A,
+    NEDE_fld_B,
+    NEDE_fld_BIII
+};
 
+/** list of possible types of spatial curvature */
 enum spatial_curvature
 {
     flat,
@@ -99,7 +106,7 @@ struct background
     double phi_ini_trigger;
     double phi_prime_ini_trigger;
 
-    /*NEDE e.o.s.*/
+    /*NEDE e.o.s. (scenario A)*/
     double three_eos_NEDE;
 
     /* New EDE decay flag */
@@ -109,6 +116,9 @@ struct background
     double tau_decay;
     double a_decay;
     double z_decay;
+
+    /* NEDE fluid nature*/
+    int NEDE_fld_nature;
 
     enum equation_of_state fluid_equation_of_state; /**< parametrisation scheme for fluid equation of state */
 
@@ -244,6 +254,7 @@ struct background
     int index_bg_rho_dr;     /**< dr density */
 
     int index_bg_rho_NEDE; /**< New EDE density */
+    int index_bg_w_NEDE;   /**< NEDE eos parameter */
 
     int index_bg_phi_scf;       /**< scalar field value */
     int index_bg_phi_prime_scf; /**< scalar field derivative wrt conformal time */
@@ -495,6 +506,16 @@ extern "C"
         double *w_fld,
         double *dw_over_da_fld,
         double *integral_fld);
+
+    int background_quantities_NEDE(
+        struct background *pba,
+        double a,
+        double a_prime_over_a,
+        double *rho,
+        double *p,
+        double *w,
+        double *dw_over_da,
+        double *ca2);
 
     int background_init(
         struct precision *ppr,

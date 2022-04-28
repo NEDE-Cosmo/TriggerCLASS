@@ -283,9 +283,9 @@ int input_init(
    */
 
   char *const target_namestrings[] = {"100*theta_s", "Omega_dcdmdr", "omega_dcdmdr",
-                                      "Omega_scf", "Omega_ini_dcdm", "omega_ini_dcdm", "sigma8"};
+                                      "Omega_scf", "Omega_ini_dcdm", "omega_ini_dcdm", "sigma8", "z_decay_NEDE"};
   char *const unknown_namestrings[] = {"h", "Omega_ini_dcdm", "Omega_ini_dcdm",
-                                       "scf_shooting_parameter", "Omega_dcdmdr", "omega_dcdmdr", "A_s"};
+                                       "scf_shooting_parameter", "Omega_dcdmdr", "omega_dcdmdr", "A_s", "NEDE_trigger_mass"};
   enum computation_stage target_cs[] = {cs_thermodynamics, cs_background, cs_background,
                                         cs_background, cs_background, cs_background, cs_nonlinear};
 
@@ -654,7 +654,9 @@ int input_read_parameters(
   int flag1, flag2, flag3;
   double param1, param2, param3;
   double param_NEDE;
-  int flag_NEDE;
+  double rho_NEDE, w_NEDE;
+  double ca2;
+  int flag_NEDE, flag_NEDE_4;
   char string_NEDE[_ARGUMENT_LENGTH_MAX_];
 
   int N_ncdm = 0, n, entries_read;
@@ -1363,6 +1365,7 @@ int input_read_parameters(
   /*new convention*/
 
   class_read_double("f_NEDE", pba->f_NEDE);
+  class_read_double("z_decay_NEDE", pba->z_decay);
   class_read_double("NEDE_trigger_mass", pba->NEDE_trigger_mass);
   class_read_double("three_eos_NEDE", pba->three_eos_NEDE);
   class_read_double("three_ceff2_NEDE", ppt->three_ceff2_NEDE);
@@ -1371,6 +1374,24 @@ int input_read_parameters(
   class_read_double("NEDE_trigger_ini", pba->NEDE_trigger_ini);
   class_read_double("Junction_tag", pba->Junction_tag);
   class_read_double("Omega0_NEDE", pba->Omega0_NEDE); // Omega today, is only used internally, when finding a better fit for z_decay.
+
+  /* NEDE: Here we decide whether NEDE decays according to scenario A or B. Default: Scneario A*/
+
+  class_call(parser_read_string(pfc, "NEDE_fld_nature", &string_NEDE, &flag_NEDE_4, errmsg),
+             errmsg,
+             errmsg);
+
+  if (flag_NEDE_4 == _TRUE_)
+  {
+    if ((strstr(string_NEDE, "A") != NULL) || (strstr(string1, "stiff") != NULL) || (strstr(string1, "Scenario_A") != NULL) || (strstr(string1, "const") != NULL))
+    {
+      pba->NEDE_fld_nature = NEDE_fld_A;
+    }
+    if ((strstr(string_NEDE, "B") != NULL) || (strstr(string1, "decay") != NULL) || (strstr(string1, "Scenario_B") != NULL))
+    {
+      pba->NEDE_fld_nature = NEDE_fld_B;
+    }
+  }
 
   // Decide if the effective sound speed is tracking the adiabatic sound speed. Default: no tracking (constant)
   class_call(parser_read_string(pfc, "NEDE_ceff_nature", &string_NEDE, &flag_NEDE, errmsg),
@@ -1391,8 +1412,8 @@ int input_read_parameters(
 
   if ((pba->Omega_NEDE > 0) || (pba->f_NEDE > 0))
   {
-    class_test(pba->NEDE_trigger_mass == 0, errmsg,
-               "In input file, NEDE_trigger_mass>0  needs to be specified for NEDE.");
+    class_test(pba->z_decay == 0, errmsg,
+               "In input file, z_decay_NEDE  needs to be specified for NEDE (The the mass as input parameter has been retired in v5).");
 
     if (pba->Omega_NEDE == 0)
       pba->Omega_NEDE = pba->f_NEDE * pow(pba->NEDE_trigger_mass * pba->Bubble_trigger_H_over_m / pba->H0, 2);
@@ -1405,42 +1426,17 @@ int input_read_parameters(
       pba->phi_prime_ini_trigger = 0; // This value is set to the attractor later.
     }
 
-    class_test(pba->f_NEDE > 0.5, errmsg,
+    class_test(pba->f_NEDE > 0.4, errmsg,
                "Choose a smaller amount of NEDE as the code has not been tested for f_NEDE > 0.4.");
 
-    /*Here we do a first run of the background module to get a good guess for z_decay. For this we do not need a super precise value of Omega_lambda as the decay happens during rad domination when Omega_lambda is subdom.. */
-
-    class_read_double("background_verbose", pba->background_verbose);
-    class_read_double("back_integration_stepsize", ppr->back_integration_stepsize);
-
-    // initial guess for decay time
-    // pba->z_decay = 1420.0 * pow(1-pba->f_NEDE,1./4.) * pba->Bubble_trigger_H_over_m * pow(pba->NEDE_trigger_mass,0.5);
-    // pba->a_decay = 1./(1.+pba->z_decay);
-    // pba->Omega0_NEDE = pba->Omega_NEDE/pow(1+pba->z_decay,3.+pba->three_eos_NEDE);
-
-    pba->Omega0_NEDE = 0; // Sufficiently good initial guess as NEDE decays quickly.
-    pba->Omega0_lambda = 1. - pba->Omega0_k - Omega_tot - pba->Omega0_NEDE;
-
-    if (pba->background_verbose > 1)
-    {
-      printf("trigger mass: %f, Omega_EDE: %e, EOS: %f \n", pba->NEDE_trigger_mass, pba->Omega_NEDE, pba->three_eos_NEDE / 3.);
-      printf("First run to estimate Omega0_NEDE and z_decay. Initial estimate is z_decay = %e and Omega0_NEDE = %e \n", pba->z_decay, pba->Omega0_NEDE);
-    }
-
-    class_call(find_z_decay(ppr, pba, errmsg), errmsg, errmsg);
-
-    pba->Omega0_lambda = 1. - pba->Omega0_k - Omega_tot - pba->Omega0_NEDE - pba->Omega0_trigger;
-
-    if (pba->background_verbose > 1)
-      printf("Second run to estimate Omega0_NEDE and z_decay. Second estimate is z_decay = %e and Omega0_NEDE = %e \n", pba->z_decay, pba->Omega0_NEDE);
-
-    class_call(find_z_decay(ppr, pba, errmsg), errmsg, errmsg);
-
-    if (pba->background_verbose > 1)
-      printf("Final  estimate is z_decay = %e and Omega0_NEDE = %e \n", pba->z_decay, pba->Omega0_NEDE);
+    if (pba->NEDE_fld_nature == NEDE_fld_A)
+      pba->Omega0_NEDE = pba->Omega_NEDE * pow(1. / (1. + pba->z_decay), (3. + pba->three_eos_NEDE));
 
     Omega_tot += pba->Omega0_NEDE;
     Omega_tot += pba->Omega0_trigger;
+
+    printf("h: %f, omega_b: %f, omega_cdm: %f, ns: %f, ln10^10As: %f, tau: %f, mass: %f \n", pba->h, pba->Omega0_b * pba->h * pba->h,
+           pba->Omega0_cdm * pba->h * pba->h, ppm->n_s, log(ppm->A_s / 1.e-10), pth->tau_reio);
   }
 
   /** - Omega_0_lambda (cosmological constant), Omega0_fld (dark energy fluid), Omega0_scf (scalar field) */
@@ -3627,6 +3623,8 @@ int input_default_params(
 
   ppt->three_ceff2_NEDE = 2.; // Default: matches adiabatic sound speed.
   ppt->three_cvis2_NEDE = 0.;
+  pba->NEDE_fld_nature = NEDE_fld_A;
+
 
   /** - thermodynamics structure */
 
@@ -4286,6 +4284,11 @@ int input_try_unknown_parameters(double *unknown_parameter,
     case sigma8:
       output[i] = nl.sigma8[nl.index_pk_m] - pfzw->target_value[i];
       break;
+    case z_decay_NEDE: // NEDE shooting
+      output[i] = ba.z_decay - pfzw->target_value[i];
+      // printf("z_decay: %f",ba.z_decay);
+      // z_decay_temp=ba.z_decay;
+      break;
     }
   }
 
@@ -4485,6 +4488,10 @@ int input_get_guess(double *xguess,
       xguess[index_guess] = 2.43e-9 / 0.87659 * pfzw->target_value[index_guess];
       dxdy[index_guess] = 2.43e-9 / 0.87659;
       break;
+
+    case z_decay_NEDE: //Guess for NEDE shooting.
+      xguess[index_guess] = pow(pfzw->target_value[index_guess], 2.) / pow(ba.Bubble_trigger_H_over_m * 1200., 2.);
+      dxdy[index_guess] = 2 * pfzw->target_value[index_guess] / pow(ba.Bubble_trigger_H_over_m * 1200., 2.);
     }
     // printf("xguess = %g\n",xguess[index_guess]);
   }

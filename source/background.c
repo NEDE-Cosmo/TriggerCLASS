@@ -1893,7 +1893,9 @@ int background_solve(
   /* Reshift interval around decay of NEDE for which the integration is made finer. */
   double delta_z;
   double a;
+
   double d;
+  double w_NEDE, ca2_NEDE;
 
   bpaw.pba = pba;
   class_alloc(pvecback, pba->bg_size * sizeof(double), pba->error_message);
@@ -1992,7 +1994,7 @@ int background_solve(
       if ((1. / a - 1. < pba->z_decay + delta_z) && (1. / a - 1. > pba->z_decay - delta_z) && (pba->z_decay > 1.))
       {
         // printf("decay: %f, a: %e, z_decay: %e, counter: %d \n", 1./a - 1.,a,pba->z_decay,d);
-        d = abs(1. / a - 1. - pba->z_decay) / delta_z;
+        d = fabs(1. / a - 1. - pba->z_decay) / delta_z;
         tau_end = tau_start + ppr->back_integration_stepsize / (1 + ppr->decay_res_enhancement * exp(-d * 6)) / (pvecback_integration[pba->index_bi_a] * pvecback[pba->index_bg_H]);
       }
     }
@@ -2215,10 +2217,13 @@ int background_solve(
     if (pba->has_NEDE == _TRUE_)
     {
 
-      printf("  -> New EDE details:\n");
+      printf("  -> NEDE details:\n");
+      printf("     -> NEDE decay time: %.2f \n", pba->z_decay);
+      printf("     -> NEDE fraction: %.4f \n", pba->f_NEDE);
+      if (pba->NEDE_fld_nature == NEDE_fld_A)
+        printf("     -> Scenario A with eos NEDE: 3*w = %.2f \n", pba->three_eos_NEDE);
       printf("     -> Percolation trigger (H/m): %f \n", pba->Bubble_trigger_H_over_m);
       printf("     -> closure check: H/H0-1: %e \n", pvecback[pba->index_bg_H] / pba->H0 - 1);
-      printf("     -> eos NEDE: omega = %e \n", pba->three_eos_NEDE / 3.);
 
       printf("     -> resolution_enhancement: %e \n", ppr->decay_res_enhancement);
       if (pba->has_NEDE_trigger == _TRUE_)
