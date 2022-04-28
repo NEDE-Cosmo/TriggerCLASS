@@ -14,3 +14,5 @@ RealSpaceInterface/cache/
 .DS_Store
 doc/manual/html
 doc/manual/latex
+~.egg-info/
+python/~.egg-info/
