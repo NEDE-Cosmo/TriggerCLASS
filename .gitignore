@@ -16,3 +16,4 @@ doc/manual/html
 doc/manual/latex
 ~.egg-info/
 python/~.egg-info/
+*.egg
