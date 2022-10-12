@@ -3611,6 +3611,7 @@ int input_default_params(
   ppt->three_ceff2_NEDE = 2.; // Default: matches adiabatic sound speed.
   ppt->three_cvis2_NEDE = 0.;
   pba->NEDE_fld_nature = NEDE_fld_A;
+  ppt->NEDE_ceff_nature = NEDE_ceff_const;  
 
 
   /** - thermodynamics structure */
