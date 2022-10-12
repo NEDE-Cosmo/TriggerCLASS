@@ -7,7 +7,7 @@ import os
 import subprocess as sbp
 import os.path as osp
 
-os.environ["CC"] = "gcc-9"
+#os.environ["CC"] = "gcc-9"
 
 # Recover the gcc compiler
 GCCPATH_STRING = sbp.Popen(
@@ -40,7 +40,7 @@ classy_ext = Extension("classy", [os.path.join(classy_folder, "classy.pyx")],
                            include_dirs=[nm.get_include(), include_folder],
                            libraries=liblist,
                            library_dirs=[root_folder, GCCPATH],
-                           extra_link_args=['-lgomp'])
+                           extra_link_args=['-lomp'])
 import six
 classy_ext.cython_directives = {'language_level': "3" if six.PY3 else "2"}
         

@@ -1350,19 +1350,6 @@ int input_read_parameters(
     pba->sgnK = -1;
 
   /* New EDE */
-  /* for compatibility with old convention*/
-  class_read_double("Omega_EDE2", pba->Omega_NEDE);
-  class_read_double("three_eos_EDE", pba->three_eos_NEDE);
-  class_read_double("three_ceff2_EDE", ppt->three_ceff2_NEDE);
-  class_read_double("three_cvis2_EDE", ppt->three_cvis2_NEDE);
-  class_read_double("EDE2_clock_ini", pba->NEDE_trigger_ini);
-  class_read_double("EDE2_clock_mass", pba->NEDE_trigger_mass);
-  class_read_double("EDE2_trigger_ini", pba->NEDE_trigger_ini);
-  class_read_double("EDE2_trigger_mass", pba->NEDE_trigger_mass);
-  class_read_double("Bubble_trigger_H_over_m", pba->Bubble_trigger_H_over_m);
-  class_read_double("Omega_NEDE", pba->Omega_NEDE); // Omega before decay (const)
-
-  /*new convention*/
 
   class_read_double("f_NEDE", pba->f_NEDE);
   class_read_double("z_decay_NEDE", pba->z_decay);
@@ -1413,7 +1400,7 @@ int input_read_parameters(
   if ((pba->Omega_NEDE > 0) || (pba->f_NEDE > 0))
   {
     class_test(pba->z_decay == 0, errmsg,
-               "In input file, z_decay_NEDE  needs to be specified for NEDE (The the mass as input parameter has been retired in v5).");
+               "In input file, z_decay_NEDE  needs to be specified for NEDE (The trigger mass as input parameter has been retired in v5).");
 
     if (pba->Omega_NEDE == 0)
       pba->Omega_NEDE = pba->f_NEDE * pow(pba->NEDE_trigger_mass * pba->Bubble_trigger_H_over_m / pba->H0, 2);

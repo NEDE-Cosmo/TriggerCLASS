@@ -17,7 +17,7 @@ vpath .base build
 ########################################################
 
 # your C compiler:
-CC        = gcc-9
+CC        = clang
 #CC       = icc
 #CC       = pgcc
 
@@ -38,14 +38,15 @@ OPTFLAG = -O4 -ffast-math #-march=native
 #OPTFLAG = -fast
 
 # your openmp flag (comment for compiling without openmp)
-OMPFLAG   = -fopenmp
+#OMPFLAG   = -fopenmp
+OMPFLAG   = -Xclang -fopenmp
 #OMPFLAG   = -mp -mp=nonuma -mp=allcores -g
 #OMPFLAG   = -openmp
 
 # all other compilation flags
 CCFLAG = -g -fPIC
 LDFLAG = -g -fPIC
-
+LDFLAG += -lomp
 # leave blank to compile without HyRec, or put path to HyRec directory
 # (with no slash at the end: e.g. hyrec or ../hyrec)
 HYREC = hyrec
