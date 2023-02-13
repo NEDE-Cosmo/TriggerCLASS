@@ -2,11 +2,12 @@ TriggerCLASS
 ==============================================
 forked from CLASS by Julien Lesgourgues and Thomas Tram; see http://class-code.net and https://github.com/lesgourg/class_public
 
-TriggerCLASS is a modification of CLASS that implements an instant phase transition triggered by a clock field and with adiabatic perturbations consistently included, as used to trigger the decay of an early dark energy component. As such, it describes the physics of the New Early Dark Energy (NEDE) and Hybrid Early Dark Energy model. The details of the implementation have been explained in the methodology part of https://arxiv.org/abs/2006.06686 and through many additional comments in the code tagged with "NEDE".
+TriggerCLASS is a modification of CLASS that implements an instant phase transition in a new fluid component that goes from a cosmological constant phase to a decaying phase. The transition is triggered by a sub-dominant clock field that carries adiabatic fluctiations. As such, it describes the physics of the New Early Dark Energy (NEDE) and Hybrid Early Dark Energy model. The details of the implementation have been explained in the methodology part of https://arxiv.org/abs/2006.06686 and through many additional comments in the code tagged with "NEDE".
 
 The version used for the publications ArXiv: 1910.10739, 2006.06686, 2009.00006 has been tagged with "NewEDEv3.0".
+The version used for the publication ArXiv: 2209.02708 has been tagged with "NewEDEv4"
 
-New in version 4 [20 Dec 2020]: TriggerCLASS now accepts f_NEDE as input parameter (replaces Omega_NEDE). Introduced "tracking mode" for which the rest-frame sound speed equals the adiabatic sound speed (this feature has not been tested intensively yet). Output improvments and more detailed comments. This version has been used for arXiv:2209.02708.
+New in version 4 [20 Dec 2020]: TriggerCLASS now accepts f_NEDE as input parameter (replaces Omega_NEDE). Introduced "tracking mode" for which the rest-frame sound speed equals the adiabatic sound speed (this feature has not been tested intensively yet). Output improvments and more detailed comments. 
 
 New in version 5 [12 Oct 2022]: TriggerCLASS now takes the decay redshift z_decay_NEDE (rather than the trigger mass) as input. The trigger mass is then determined via a shooting method.  Output improvments and more detailed comments. 
 

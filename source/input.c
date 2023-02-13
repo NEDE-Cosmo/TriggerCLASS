@@ -287,7 +287,7 @@ int input_init(
   char *const unknown_namestrings[] = {"h", "Omega_ini_dcdm", "Omega_ini_dcdm",
                                        "scf_shooting_parameter", "Omega_dcdmdr", "omega_dcdmdr", "A_s", "NEDE_trigger_mass"};
   enum computation_stage target_cs[] = {cs_thermodynamics, cs_background, cs_background,
-                                        cs_background, cs_background, cs_background, cs_nonlinear};
+                                        cs_background, cs_background, cs_background, cs_nonlinear,cs_background};
 
   int input_verbose = 0, int1, aux_flag, shooting_failed = _FALSE_;
 
