@@ -64,6 +64,7 @@ cdef extern from "class.h":
         double h
         double H0
         double z_decay
+        double NEDE_trigger_mass
         double age
         double conformal_age
         double * m_ncdm_in_eV
