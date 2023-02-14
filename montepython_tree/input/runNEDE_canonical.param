@@ -104,6 +104,7 @@ data.parameters['YHe']             = [1, None, None, 0,     1,   'derived']
 data.parameters['sigma8']          = [0, None, None, 0,     1,   'derived']
 data.parameters['rs_d']          = [0, None, None, 0,     1,   'derived']
 data.parameters['z_decay']          = [0, None, None, 0,     1,   'derived']
+data.parameters['NEDE_trigger_mass']          = [0, None, None, 0,     1,   'derived']
 
 # Other cosmo parameters (fixed parameters, precision parameters, etc.)
 
