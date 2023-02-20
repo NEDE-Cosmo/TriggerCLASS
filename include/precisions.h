@@ -499,7 +499,8 @@ class_precision_parameter(tol_gauss_legendre,double,ppr->smallest_allowed_variat
 
 /*New EDE*/			  
 /* Makes integration around EDE decay finer. */
-class_precision_parameter(decay_res_enhancement,double,0)
+class_precision_parameter(decay_res_enhancement,double,1)
+class_precision_parameter(trigger_resolution,double,0.2)
 class_precision_parameter(sub_dom_cond,double,0) 
 			  
 #undef class_precision_parameter

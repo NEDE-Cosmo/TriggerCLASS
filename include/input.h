@@ -158,7 +158,8 @@ enum target_names
   Omega_ini_dcdm,
   omega_ini_dcdm,
   sigma8,
-  z_decay_NEDE
+  z_decay_NEDE,
+  Omega0_NEDE_trigger_DM
 };
 enum computation_stage
 {
@@ -170,7 +171,7 @@ enum computation_stage
   cs_transfer,
   cs_spectra
 };
-#define _NUM_TARGETS_ 8 // Keep this number as number of target_names
+#define _NUM_TARGETS_ 9 // Keep this number as number of target_names
 
 struct input_pprpba
 {
@@ -184,8 +185,10 @@ struct fzerofun_workspace
   struct file_content fc;
   enum target_names *target_name;
   double *target_value;
+  double *unknown_param_NEDE;
   int target_size;
   enum computation_stage required_computation_stage;
+  int counter;
 };
 
 /**************************************************************/
@@ -298,6 +301,11 @@ extern "C"
                         double *output,
                         ErrorMsg error_message);
 
+  int input_fzerofun_1d_NEDE(double x,
+                        void *fzerofun_workspace,
+                        double *output,
+                        ErrorMsg error_message);
+
   int input_get_guess(double *xguess,
                       double *dxdy,
                       struct fzerofun_workspace *pfzw,
@@ -308,6 +316,14 @@ extern "C"
                       struct fzerofun_workspace *pfzw,
                       double tol,
                       ErrorMsg errmsg);
+
+  int input_find_root_NEDE(double *x_inout,
+                           double *dxdF,
+                           int counter,
+                           int *fevals,
+                           struct fzerofun_workspace *pfzw,
+                           double tol,
+                           ErrorMsg errmsg);
 
   int file_exists(const char *fname);
 

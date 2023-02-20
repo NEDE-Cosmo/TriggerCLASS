@@ -94,10 +94,13 @@ struct background
     /*Decay time triggere*/
     double Bubble_trigger_H_over_m;
 
-    /*Trigger field mass**/
+    /*Trigger fluid threshold*/
+    double Trigger_fluid_H_over_m;
+
+    /*Trigger field mass*/
     double NEDE_trigger_mass;
 
-    /*Trigger initial field value**/
+    /*Trigger initial field value*/
     double NEDE_trigger_ini;
 
     /*Omega trigger field today*/
@@ -112,10 +115,18 @@ struct background
     /* New EDE decay flag */
     short decay_flag;
 
+    /* New EDE trigger fluid flag */
+    short trigger_fluid_flag;
+    short trigger_adaptive_stepsize_flag;
+
     /* New EDE decay time */
     double tau_decay;
     double a_decay;
     double z_decay;
+
+
+    double a_trigger_fluid;
+    double rho_trigger_fluid;
 
     /* NEDE fluid nature*/
     int NEDE_fld_nature;
@@ -382,6 +393,7 @@ struct background
     short has_NEDE;      /**< presence of NEDE */
     short has_NEDE_pert; /**< presence of NEDE perturbations*/
     short has_NEDE_trigger;
+    short has_NEDE_trigger_DM;
 
     //@}
 

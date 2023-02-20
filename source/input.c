@@ -283,11 +283,11 @@ int input_init(
    */
 
   char *const target_namestrings[] = {"100*theta_s", "Omega_dcdmdr", "omega_dcdmdr",
-                                      "Omega_scf", "Omega_ini_dcdm", "omega_ini_dcdm", "sigma8", "z_decay_NEDE"};
+                                      "Omega_scf", "Omega_ini_dcdm", "omega_ini_dcdm", "sigma8", "z_decay_NEDE", "Omega0_NEDE_trigger_DM"};
   char *const unknown_namestrings[] = {"h", "Omega_ini_dcdm", "Omega_ini_dcdm",
-                                       "scf_shooting_parameter", "Omega_dcdmdr", "omega_dcdmdr", "A_s", "NEDE_trigger_mass"};
+                                       "scf_shooting_parameter", "Omega_dcdmdr", "omega_dcdmdr", "A_s", "NEDE_trigger_mass", "NEDE_trigger_ini"};
   enum computation_stage target_cs[] = {cs_thermodynamics, cs_background, cs_background,
-                                        cs_background, cs_background, cs_background, cs_nonlinear,cs_background};
+                                        cs_background, cs_background, cs_background, cs_nonlinear, cs_background, cs_background};
 
   int input_verbose = 0, int1, aux_flag, shooting_failed = _FALSE_;
 
@@ -354,6 +354,10 @@ int input_init(
     class_alloc(fzw.unknown_parameters_index,
                 unknown_parameters_size * sizeof(int),
                 errmsg);
+    class_alloc(fzw.unknown_param_NEDE,
+                unknown_parameters_size * sizeof(double),
+                errmsg);
+
     fzw.target_size = unknown_parameters_size;
     class_alloc(fzw.target_name,
                 fzw.target_size * sizeof(enum target_names),
@@ -433,21 +437,38 @@ int input_init(
                                  &fzw,
                                  errmsg),
                  errmsg, errmsg);
-
-      class_call_try(fzero_Newton(input_try_unknown_parameters,
-                                  x_inout,
-                                  dxdF,
-                                  unknown_parameters_size,
-                                  1e-4,
-                                  1e-6,
-                                  &fzw,
-                                  &fevals,
-                                  errmsg),
-                     errmsg, pba->shooting_error, shooting_failed = _TRUE_);
+      /*
+            class_call_try(fzero_Newton(input_try_unknown_parameters,
+                                        x_inout,
+                                        dxdF,
+                                        unknown_parameters_size,
+                                        1e-4,
+                                        1e-6,
+                                        &fzw,
+                                        &fevals,
+                                        errmsg),
+                           errmsg, pba->shooting_error, shooting_failed = _TRUE_);
+      */
 
       /* Store xzero */
+      fzw.unknown_param_NEDE[0] = x_inout[0];
+      fzw.unknown_param_NEDE[1] = x_inout[1];
+
       for (counter = 0; counter < unknown_parameters_size; counter++)
       {
+        fzw.counter = counter;
+        printf("counter: %d, xinout1 %f, xinout2 %f, size: %d ", counter, x_inout[0], x_inout[1], unknown_parameters_size);
+        class_call_try(input_find_root_NEDE(x_inout,
+                                            dxdF,
+                                            counter,
+                                            &fevals,
+                                            &fzw,
+                                            ppr->tol_shooting_1d,
+                                            errmsg),
+                       errmsg,
+                       pba->shooting_error,
+                       shooting_failed = _TRUE_);
+        fzw.unknown_param_NEDE[i] = x_inout[i];
         sprintf(fzw.fc.value[fzw.unknown_parameters_index[counter]],
                 "%e", x_inout[counter]);
         if (input_verbose > 0)
@@ -458,6 +479,8 @@ int input_init(
         }
       }
 
+
+     
       free(x_inout);
       free(dxdF);
     }
@@ -503,6 +526,7 @@ int input_init(
     free(fzw.unknown_parameters_index);
     free(fzw.target_name);
     free(fzw.target_value);
+    free(fzw.unknown_param_NEDE);
   }
   /** - case with no unknown parameters */
   else
@@ -1360,7 +1384,9 @@ int input_read_parameters(
   class_read_double("H_over_m_NEDE", pba->Bubble_trigger_H_over_m);
   class_read_double("NEDE_trigger_ini", pba->NEDE_trigger_ini);
   class_read_double("Junction_tag", pba->Junction_tag);
-  class_read_double("Omega0_NEDE", pba->Omega0_NEDE); // Omega today, is only used internally, when finding a better fit for z_decay.
+  class_read_double("Omega0_NEDE", pba->Omega0_NEDE);
+  class_read_double("Omega0_NEDE_trigger_DM", pba->Omega0_trigger);
+  class_read_double("NEDE_trigger_fluid_H_m", pba->Trigger_fluid_H_over_m);
 
   /* NEDE: Here we decide whether NEDE decays according to scenario A or B. Default: Scneario A*/
 
@@ -1411,6 +1437,10 @@ int input_read_parameters(
     {
       pba->phi_ini_trigger = pba->NEDE_trigger_ini;
       pba->phi_prime_ini_trigger = 0; // This value is set to the attractor later.
+
+      if (pba->Omega0_trigger == 0)
+        class_test(pba->NEDE_trigger_ini > 0.01, errmsg,
+                   "The initial value for the trigger field is too large for it to be negligible. Either reduce it or use Omega0_NEDE_trigger_DM as input.");
     }
 
     class_test(pba->f_NEDE > 0.4, errmsg,
@@ -3598,21 +3628,22 @@ int input_default_params(
   pba->Omega_NEDE = 0.;
   pba->f_NEDE = 0;
   pba->Omega0_NEDE = 0.;
-  pba->Omega0_trigger = 0.;
+  pba->Omega0_trigger = 0.;  // Default: Trigger is subdominant and hence does not contribute to DM.
   pba->decay_flag = _FALSE_; // Initially the decay has not yet taken place.
   pba->Junction_tag = 1;     // Default: standard junction condition inferred from matching.
   pba->NEDE_trigger_ini = 0.001;
 
-  pba->Bubble_trigger_H_over_m = .2; // Default value ionferred from miscroscpic model.
+  pba->Bubble_trigger_H_over_m = .2; // Default value inferred from miscroscpic model.
+  pba->Trigger_fluid_H_over_m = 0.;  // Default value implies that fluid approximation is never used.
   pba->NEDE_trigger_mass = 0.;
   pba->z_decay = 0.;
   pba->a_decay = 0.;
 
+  pba->a_trigger_fluid = 1.1; // This value is to large to be ever relevant. In other words, the default is not to switch on fluid approximation.
   ppt->three_ceff2_NEDE = 2.; // Default: matches adiabatic sound speed.
   ppt->three_cvis2_NEDE = 0.;
   pba->NEDE_fld_nature = NEDE_fld_A;
-  ppt->NEDE_ceff_nature = NEDE_ceff_const;  
-
+  ppt->NEDE_ceff_nature = NEDE_ceff_const;
 
   /** - thermodynamics structure */
 
@@ -3937,6 +3968,46 @@ int input_fzerofun_1d(double input,
                                           error_message),
              error_message,
              error_message);
+
+  return _SUCCESS_;
+}
+
+int input_fzerofun_1d_NEDE(double x,
+                           void *voidpfzw,
+                           double *output,
+                           ErrorMsg error_message)
+{
+  double *x_inout;
+  double *output_arr;
+  int counter;
+  // We still need to have the complementary value.
+
+  struct fzerofun_workspace *pfzw;
+  pfzw = (struct fzerofun_workspace *)voidpfzw;
+  counter = pfzw->counter;
+
+  class_alloc(x_inout,
+              sizeof(double) * 2,
+              error_message);
+  class_alloc(output_arr,
+              sizeof(double) * 2,
+              error_message);
+  x_inout[0] = pfzw->unknown_param_NEDE[0];
+  x_inout[1] = pfzw->unknown_param_NEDE[1];
+  x_inout[counter] = x;
+
+  class_call(input_try_unknown_parameters(x_inout,
+                                          2,
+                                          voidpfzw,
+                                          output_arr,
+                                          error_message),
+             error_message,
+             error_message);
+
+  *output = output_arr[counter];
+
+  free(x_inout);
+  free(output_arr);
 
   return _SUCCESS_;
 }
@@ -4273,9 +4344,15 @@ int input_try_unknown_parameters(double *unknown_parameter,
       output[i] = nl.sigma8[nl.index_pk_m] - pfzw->target_value[i];
       break;
     case z_decay_NEDE: // NEDE shooting
-      output[i] = ba.z_decay - pfzw->target_value[i];
-      // printf("z_decay: %f",ba.z_decay);
+      output[i] = (ba.z_decay - pfzw->target_value[i]);
+      // output[i] = output[i] / pfzw->target_value[i];
+      printf("z_decay: %f\n", ba.z_decay);
       // z_decay_temp=ba.z_decay;
+      break;
+    case Omega0_NEDE_trigger_DM: // NEDE shooting
+      output[i] = ba.Omega0_trigger - pfzw->target_value[i];
+      // output[i] = output[i] / pfzw->target_value[i];
+      printf("Omega0_trigger: %f \n", ba.Omega0_trigger);
       break;
     }
   }
@@ -4338,6 +4415,7 @@ int input_get_guess(double *xguess,
   int i;
 
   double Omega_M, a_decay, gamma, Omega0_dcdmdr = 1.0;
+  double trigger_mass, decay_redshift;
   int index_guess;
 
   /* Cheat to read only known parameters: */
@@ -4477,13 +4555,28 @@ int input_get_guess(double *xguess,
       dxdy[index_guess] = 2.43e-9 / 0.87659;
       break;
 
-    case z_decay_NEDE: //Guess for NEDE shooting.
-      xguess[index_guess] = pow(pfzw->target_value[index_guess], 2.) / pow(ba.Bubble_trigger_H_over_m * 1200., 2.);
-      dxdy[index_guess] = 2 * pfzw->target_value[index_guess] / pow(ba.Bubble_trigger_H_over_m * 1200., 2.);
+    case z_decay_NEDE: // Guess for NEDE shooting.
+      trigger_mass = pow(pfzw->target_value[index_guess], 2.) / pow(ba.Bubble_trigger_H_over_m * 1250., 2.);
+      decay_redshift = pfzw->target_value[index_guess];
+      xguess[index_guess] = trigger_mass;
+      dxdy[index_guess] = 2 * pfzw->target_value[index_guess] / pow(ba.Bubble_trigger_H_over_m * 1250., 2.);
+      // dxdy[index_guess] = dxdy[index_guess] * pfzw->target_value[index_guess];
+      printf("xguess = %g,dxdy=%g \n", xguess[index_guess], dxdy[index_guess]);
+      break;
+
+    case Omega0_NEDE_trigger_DM: // Guess for NEDE shooting.
+      decay_redshift = pfzw->target_value[index_guess - 1];
+      trigger_mass = pow(decay_redshift, 2.) / pow(ba.Bubble_trigger_H_over_m * 1200., 2.);
+      xguess[index_guess] = pow(50 * ba.H0 * ba.H0 * pfzw->target_value[index_guess] * pow(decay_redshift, 3) / pow(trigger_mass, 2), 0.5);
+      dxdy[index_guess] = 0.5 * xguess[index_guess] / pfzw->target_value[index_guess];
+      // dxdy[index_guess] = dxdy[index_guess] * pfzw->target_value[index_guess];
+      printf("xguess = %g,dxdy=%g, z_decay = %g \n", xguess[index_guess], dxdy[index_guess], decay_redshift);
+      break;
     }
     // printf("xguess = %g\n",xguess[index_guess]);
   }
 
+  printf("xinout1: %f, xinout2: %f \n", xguess[0], xguess[1]);
   for (i = 0; i < pfzw->fc.size; i++)
   {
     pfzw->fc.read[i] = _FALSE_;
@@ -4577,6 +4670,99 @@ int input_find_root(double *xzero,
                                 fevals,
                                 errmsg),
              errmsg, errmsg);
+
+  return _SUCCESS_;
+}
+
+int input_find_root_NEDE(double *x_inout,
+                         double *dxdF,
+                         int counter,
+                         int *fevals,
+                         struct fzerofun_workspace *pfzw,
+                         double tol,
+                         ErrorMsg errmsg)
+{
+  double x1, x2, f1, f2, dxdy, dx, xzero;
+  int iter, iter2;
+  int return_function;
+  /** Summary: */
+
+  /** - Fisrt we do our guess */
+  /*class_call(input_get_guess(&x1, &dxdy, pfzw, errmsg),
+             errmsg, errmsg);*/
+  //      printf("x1= %g\n",x1);
+
+  x1 = x_inout[counter];
+  dxdy = dxdF[counter];
+
+  class_call(input_fzerofun_1d_NEDE(x1,
+                                    pfzw,
+                                    &f1,
+                                    errmsg),
+             errmsg, errmsg);
+
+  (*fevals)++;
+  // printf("x1= %g, f1= %g\n",x1,f1);
+
+  dx = 1.5 * f1 * dxdy;
+
+  /** - Then we do a linear hunt for the boundaries */
+  for (iter = 1; iter <= 15; iter++)
+  {
+    // x2 = x1 + search_dir*dx;
+    x2 = x1 - dx;
+
+    for (iter2 = 1; iter2 <= 3; iter2++)
+    {
+      return_function = input_fzerofun_1d_NEDE(x2, pfzw, &f2, errmsg);
+      (*fevals)++;
+      // printf("x2= %g, f2= %g\n",x2,f2);
+      // fprintf(stderr,"iter2=%d\n",iter2);
+
+      if (return_function == _SUCCESS_)
+      {
+        break;
+      }
+      else if (iter2 < 3)
+      {
+        dx *= 0.5;
+        x2 = x1 - dx;
+      }
+      else
+      {
+        // fprintf(stderr,"get here\n");
+        class_stop(errmsg, errmsg);
+      }
+    }
+
+    if (f1 * f2 < 0.0)
+    {
+      /** - root has been bracketed */
+      if (0 == 1)
+      {
+        printf("Root has been bracketed after %d iterations: [%g, %g].\n", iter, x1, x2);
+      }
+      break;
+    }
+
+    x1 = x2;
+    f1 = f2;
+  }
+
+  /** - Find root using Ridders method. (Exchange for bisection if you are old-school.)*/
+  class_call(class_fzero_ridder(input_fzerofun_1d_NEDE,
+                                x1,
+                                x2,
+                                tol * MAX(fabs(x1), fabs(x2)),
+                                pfzw,
+                                &f1,
+                                &f2,
+                                &xzero,
+                                fevals,
+                                errmsg),
+             errmsg, errmsg);
+
+  x_inout[counter] = xzero;
 
   return _SUCCESS_;
 }
