@@ -117,6 +117,7 @@ struct background
 
     /* New EDE trigger fluid flag */
     short trigger_fluid_flag;
+    short trigger_fluid_flag_0;
     short trigger_adaptive_stepsize_flag;
 
     /* New EDE decay time */
@@ -126,7 +127,12 @@ struct background
 
 
     double a_trigger_fluid;
+    double a_trigger_average_start;
+    double tau_trigger_average_start;
+    double t_trigger_average_start;
+    double z_trigger_fluid;
     double rho_trigger_fluid;
+    double rho_avg_trigger_fld;
 
     /* NEDE fluid nature*/
     int NEDE_fld_nature;
@@ -356,6 +362,7 @@ struct background
 
     int index_bi_phi_trigger;       /**< {B} scalar field value */
     int index_bi_phi_prime_trigger; /**< {B} scalar field derivative wrt conformal time */
+    int index_bi_rho_avg_trigger; 
 
     int index_bi_time;    /**< {C} proper (cosmological) time in Mpc */
     int index_bi_rs;      /**< {C} sound horizon */

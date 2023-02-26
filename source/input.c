@@ -1443,6 +1443,13 @@ int input_read_parameters(
                    "The initial value for the trigger field is too large for it to be negligible. Either reduce it or use Omega0_NEDE_trigger_DM as input.");
     }
 
+    if (pba->Trigger_fluid_H_over_m > 0){
+       class_test(pba->Trigger_fluid_H_over_m  > pba->Bubble_trigger_H_over_m, errmsg,
+                   "The trigger fluid approximation cannot be applied before the transition. Reduce therefore 'NEDE_trigger_fluid_H_m'.");
+  
+
+    }
+
     class_test(pba->f_NEDE > 0.4, errmsg,
                "Choose a smaller amount of NEDE as the code has not been tested for f_NEDE > 0.4.");
 
@@ -3640,6 +3647,7 @@ int input_default_params(
   pba->a_decay = 0.;
 
   pba->a_trigger_fluid = 1.1; // This value is to large to be ever relevant. In other words, the default is not to switch on fluid approximation.
+  pba->z_trigger_fluid = 0.0;
   ppt->three_ceff2_NEDE = 2.; // Default: matches adiabatic sound speed.
   ppt->three_cvis2_NEDE = 0.;
   pba->NEDE_fld_nature = NEDE_fld_A;

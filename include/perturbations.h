@@ -71,6 +71,13 @@ enum sda_flags
   sda_on
 };
 
+/*New EDE, we apply trigger fluid apprximation when tfa_on*/
+enum tfa_flags
+{
+  tfa_off,
+  tfa_on
+};
+
 /*Nature of NEDE fluid, either effective rest-frame sound speed is tracking the adiabatic sound speed (adiabatic case) or it is constant.*/
 enum NEDE_ceff_nature
 {
@@ -573,6 +580,10 @@ struct perturb_vector
   int index_pt_phi_prime_scf;     /**< scalar field velocity */
   int index_pt_phi_trigger;       /**< trigger field density */
   int index_pt_phi_prime_trigger; /**< trigger field velocity */
+  int index_pt_delta_trigger_fld;      
+  int index_pt_theta_trigger_fld; 
+  int index_pt_delta_trigger_cycle_integral;
+  int index_pt_theta_hat_trigger_cycle_integral;
   int index_pt_delta_ur;          /**< density of ultra-relativistic neutrinos/relics */
   int index_pt_theta_ur;          /**< velocity of ultra-relativistic neutrinos/relics */
   int index_pt_shear_ur;          /**< shear of ultra-relativistic neutrinos/relics */
@@ -729,6 +740,7 @@ struct perturb_workspace
   int index_ap_ncdmfa;     /**< index for ncdm fluid approximation */
   int index_ap_CCa;        /**< index for New EDE approximation*/
   int index_ap_sda;        /**< index for New EDE approximation*/
+  int index_ap_tfa;        /**< index for New EDE approximation*/
 
   int ap_size; /**< number of relevant approximations for a given mode */
 
