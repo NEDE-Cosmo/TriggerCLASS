@@ -6285,9 +6285,12 @@ int perturb_vector_init(
               // theta_avg = ppw->pv->y[ppw->pv->index_pt_theta_hat_trigger_cycle_integral] / (pba->tau_trigger_fluid - pba->tau_trigger_average_start) / pba->rho_avg_trigger_fld;
               // theta_tau_avg = ppw->pv->y[ppw->pv->index_pt_theta_hat_t_trigger_cycle_integral] / (pba->tau_trigger_fluid - pba->tau_trigger_average_start) / pba->rho_avg_trigger_fld;
 
-              ppv->y[ppv->index_pt_delta_trigger_fld] = ppw->pv->y[ppw->pv->index_pt_delta_trigger_cycle_integral] / ppw->pv->y[ppw->pv->index_pt_theta_hat_t_trigger_cycle_integral] / pba->rho_avg_trigger_fld; // 4 * delta_avg + 6 * (delta_tau_avg - delta_avg * tau) / (pba->tau_trigger_fluid - pba->tau_trigger_average_start);  // delta_rho_trigger / ppw->pvecback[pba->index_bg_rho_trigger];
+              ppv->y[ppv->index_pt_delta_trigger_fld] = ppw->pv->y[ppw->pv->index_pt_delta_trigger_cycle_integral] / ppw->pv->y[ppw->pv->index_pt_theta_hat_t_trigger_cycle_integral];// / pba->rho_avg_trigger_fld; // 4 * delta_avg + 6 * (delta_tau_avg - delta_avg * tau) / (pba->tau_trigger_fluid - pba->tau_trigger_average_start);  // delta_rho_trigger / ppw->pvecback[pba->index_bg_rho_trigger];
 
-              ppv->y[ppv->index_pt_theta_trigger_fld] = ppw->pv->y[ppw->pv->index_pt_theta_hat_trigger_cycle_integral] / ppw->pv->y[ppw->pv->index_pt_theta_hat_t_trigger_cycle_integral] / pba->rho_avg_trigger_fld; // 4 * theta_avg + 6 * (theta_tau_avg - theta_avg * tau) / (pba->tau_trigger_fluid - pba->tau_trigger_average_start); // ppw->pv->y[ppw->pv->index_pt_theta_hat_trigger_cycle_integral] / (pba->tau_trigger_fluid - pba->tau_trigger_average_start) / pba->rho_avg_trigger_fld; // rho_plus_p_theta_trigger_fld / (ppw->pvecback[pba->index_bg_rho_trigger] + 0. * ppw->pvecback[pba->index_bg_p_trigger]);
+              ppv->y[ppv->index_pt_theta_trigger_fld] = ppw->pv->y[ppw->pv->index_pt_theta_hat_trigger_cycle_integral] / ppw->pv->y[ppw->pv->index_pt_theta_hat_t_trigger_cycle_integral];// / pba->rho_avg_trigger_fld; // 4 * theta_avg + 6 * (theta_tau_avg - theta_avg * tau) / (pba->tau_trigger_fluid - pba->tau_trigger_average_start); // ppw->pv->y[ppw->pv->index_pt_theta_hat_trigger_cycle_integral] / (pba->tau_trigger_fluid - pba->tau_trigger_average_start) / pba->rho_avg_trigger_fld; //
+
+              //ppv->y[ppv->index_pt_delta_trigger_fld] = delta_rho_trigger / ppw->pvecback[pba->index_bg_rho_trigger];
+              //ppv->y[ppv->index_pt_theta_trigger_fld] = rho_plus_p_theta_trigger_fld / (ppw->pvecback[pba->index_bg_rho_trigger] + 0. * ppw->pvecback[pba->index_bg_p_trigger]);
 
               // printf("k: %f, ma: %f , naive delta-rho: %e, average: %e,m cs: %e, x: %e \n", k, pba->NEDE_trigger_mass * a, delta_rho_trigger, ppw->pv->y[ppw->pv->index_pt_delta_trigger_cycle_integral] / ppw->pv->y[ppw->pv->index_pt_theta_hat_t_trigger_cycle_integral], cs2_trigger, ppw->pv->y[ppw->pv->index_pt_phi_trigger]);
             }
@@ -7532,19 +7535,17 @@ int perturb_approximations(
 
         if ((ppw->pvecback[pba->index_bg_a] > pba->a_trigger_average_start) && (pba->has_NEDE_trigger_DM == _TRUE_))
         {
-          /* class_call(background_at_tau(pba, tau, pba->long_info, ppw->inter_mode, &(ppw->last_index_back), ppw->pvecback),
-                      pba->error_message,
-                      ppt->error_message);*/
-          a = ppw->pvecback[pba->index_bg_a];
-          H = ppw->pvecback[pba->index_bg_H];
 
-          //printf("t: %f ",ppw->pvecback[pba->index_bg_time]);
+          // a = ppw->pvecback[pba->index_bg_a];
+          // H = ppw->pvecback[pba->index_bg_H];
+
+          // printf("t: %f ",ppw->pvecback[pba->index_bg_time]);
           // H_start_averaging = pba->Trigger_fluid_H_over_m * pba->NEDE_trigger_mass * (1. + 2. * _PI_ / pow(pba->NEDE_trigger_mass * pba->NEDE_trigger_mass + k * k / (a * a), 0.5) / ppw->pvecback[pba->index_bg_time]);
 
           // if (H_start_averaging > H)
           ppw->approx[ppw->index_ap_tavg] = (int)tavg_on;
           // else
-          //  ppw->approx[ppw->index_ap_tavg] = (int)tavg_off;
+          //   ppw->approx[ppw->index_ap_tavg] = (int)tavg_off;
         }
         else
         {
@@ -11181,8 +11182,8 @@ int perturb_derivs(double tau,
             if ((ppw->approx[ppw->index_ap_tavg] == (int)tavg_on) && (ppw->approx[ppw->index_ap_tfa] == (int)tfa_off))
             {
               dy[pv->index_pt_delta_trigger_cycle_integral] = 1. / 3. *
-                                                              (1. / a2 * pvecback[pba->index_bg_phi_prime_trigger] * y[pv->index_pt_phi_prime_trigger] + pvecback[pba->index_bg_dV_trigger] * y[pv->index_pt_phi_trigger]);
-              dy[pv->index_pt_theta_hat_trigger_cycle_integral] = 1. / 3. * k2 / a2 * pvecback[pba->index_bg_phi_prime_trigger] * y[pv->index_pt_phi_trigger];
+                                                              (1. / a2 * pvecback[pba->index_bg_phi_prime_trigger] * y[pv->index_pt_phi_prime_trigger] + pvecback[pba->index_bg_dV_trigger] * y[pv->index_pt_phi_trigger])/pvecback[pba->index_bg_rho_trigger];
+              dy[pv->index_pt_theta_hat_trigger_cycle_integral] = (1. / 3. * k2 / a2 * pvecback[pba->index_bg_phi_prime_trigger] * y[pv->index_pt_phi_trigger])/pvecback[pba->index_bg_rho_trigger];
 
               dy[pv->index_pt_delta_t_trigger_cycle_integral] = tau * 1. / 3. *
                                                                 (1. / a2 * pvecback[pba->index_bg_phi_prime_trigger] * y[pv->index_pt_phi_prime_trigger] + pvecback[pba->index_bg_dV_trigger] * y[pv->index_pt_phi_trigger]);

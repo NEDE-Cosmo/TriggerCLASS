@@ -1207,6 +1207,9 @@ int background_indices(
   class_define_index(pba->index_bg_rho_trigger, pba->has_NEDE_trigger, index_bg, 1);
   class_define_index(pba->index_bg_p_trigger, pba->has_NEDE_trigger, index_bg, 1);
   class_define_index(pba->index_bg_p_prime_trigger, pba->has_NEDE_trigger, index_bg, 1);
+  
+  
+  class_define_index(pba->index_bg_time, _TRUE_, index_bg, 1);
 
   /* - end of indices in the normal vector of background values */
   pba->bg_size_normal = index_bg;
@@ -1229,7 +1232,7 @@ int background_indices(
   class_define_index(pba->index_bg_lum_distance, _TRUE_, index_bg, 1);
 
   /* -> proper time (for age of the Universe) */
-  class_define_index(pba->index_bg_time, _TRUE_, index_bg, 1);
+  //class_define_index(pba->index_bg_time, _TRUE_, index_bg, 1);
 
   /* -> conformal sound horizon */
   class_define_index(pba->index_bg_rs, _TRUE_, index_bg, 1);
