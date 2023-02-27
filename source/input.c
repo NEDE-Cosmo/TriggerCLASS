@@ -3645,8 +3645,10 @@ int input_default_params(
   pba->NEDE_trigger_mass = 0.;
   pba->z_decay = 0.;
   pba->a_decay = 0.;
+  
 
   pba->a_trigger_fluid = 1.1; // This value is to large to be ever relevant. In other words, the default is not to switch on fluid approximation.
+  pba->a_trigger_average_start = 1.1;
   pba->z_trigger_fluid = 0.0;
   ppt->three_ceff2_NEDE = 2.; // Default: matches adiabatic sound speed.
   ppt->three_cvis2_NEDE = 0.;

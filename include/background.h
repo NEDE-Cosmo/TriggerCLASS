@@ -130,6 +130,8 @@ struct background
     double a_trigger_average_start;
     double tau_trigger_average_start;
     double t_trigger_average_start;
+    double t_trigger_fluid;
+    double tau_trigger_fluid;
     double z_trigger_fluid;
     double rho_trigger_fluid;
     double rho_avg_trigger_fld;

@@ -71,11 +71,17 @@ enum sda_flags
   sda_on
 };
 
-/*New EDE, we apply trigger fluid apprximation when tfa_on*/
+/*New EDE, we apply trigger fluid approximation when tfa_on*/
 enum tfa_flags
 {
   tfa_off,
   tfa_on
+};
+
+enum tavg_flags
+{
+  tavg_off,
+  tavg_on
 };
 
 /*Nature of NEDE fluid, either effective rest-frame sound speed is tracking the adiabatic sound speed (adiabatic case) or it is constant.*/
@@ -580,20 +586,22 @@ struct perturb_vector
   int index_pt_phi_prime_scf;     /**< scalar field velocity */
   int index_pt_phi_trigger;       /**< trigger field density */
   int index_pt_phi_prime_trigger; /**< trigger field velocity */
-  int index_pt_delta_trigger_fld;      
-  int index_pt_theta_trigger_fld; 
+  int index_pt_delta_trigger_fld;
+  int index_pt_theta_trigger_fld;
   int index_pt_delta_trigger_cycle_integral;
   int index_pt_theta_hat_trigger_cycle_integral;
-  int index_pt_delta_ur;          /**< density of ultra-relativistic neutrinos/relics */
-  int index_pt_theta_ur;          /**< velocity of ultra-relativistic neutrinos/relics */
-  int index_pt_shear_ur;          /**< shear of ultra-relativistic neutrinos/relics */
-  int index_pt_l3_ur;             /**< l=3 of ultra-relativistic neutrinos/relics */
-  int l_max_ur;                   /**< max momentum in Boltzmann hierarchy (at least 3) */
-  int index_pt_delta_idr;         /**< density of interacting dark radiation */
-  int index_pt_theta_idr;         /**< velocity of interacting dark radiation */
-  int index_pt_shear_idr;         /**< shear of interacting dark radiation */
-  int index_pt_l3_idr;            /**< l=3 of interacting dark radiation */
-  int l_max_idr;                  /**< max momentum in Boltzmann hierarchy (at least 3) for interacting dark radiation */
+  int index_pt_delta_t_trigger_cycle_integral;
+  int index_pt_theta_hat_t_trigger_cycle_integral;
+  int index_pt_delta_ur;  /**< density of ultra-relativistic neutrinos/relics */
+  int index_pt_theta_ur;  /**< velocity of ultra-relativistic neutrinos/relics */
+  int index_pt_shear_ur;  /**< shear of ultra-relativistic neutrinos/relics */
+  int index_pt_l3_ur;     /**< l=3 of ultra-relativistic neutrinos/relics */
+  int l_max_ur;           /**< max momentum in Boltzmann hierarchy (at least 3) */
+  int index_pt_delta_idr; /**< density of interacting dark radiation */
+  int index_pt_theta_idr; /**< velocity of interacting dark radiation */
+  int index_pt_shear_idr; /**< shear of interacting dark radiation */
+  int index_pt_l3_idr;    /**< l=3 of interacting dark radiation */
+  int l_max_idr;          /**< max momentum in Boltzmann hierarchy (at least 3) for interacting dark radiation */
 
   int index_pt_delta_NEDE;
   int index_pt_theta_NEDE;
@@ -741,6 +749,7 @@ struct perturb_workspace
   int index_ap_CCa;        /**< index for New EDE approximation*/
   int index_ap_sda;        /**< index for New EDE approximation*/
   int index_ap_tfa;        /**< index for New EDE approximation*/
+  int index_ap_tavg;        /**< index for New EDE approximation*/
 
   int ap_size; /**< number of relevant approximations for a given mode */
 

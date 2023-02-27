@@ -2714,6 +2714,7 @@ int perturb_workspace_init(
     class_define_index(ppw->index_ap_CCa, pba->has_NEDE, index_ap, 1);
     class_define_index(ppw->index_ap_sda, pba->has_NEDE, index_ap, 1);
     class_define_index(ppw->index_ap_tfa, pba->has_NEDE_trigger, index_ap, 1);
+    class_define_index(ppw->index_ap_tavg, pba->has_NEDE_trigger, index_ap, 1);
   }
 
   ppw->ap_size = index_ap;
@@ -2755,6 +2756,7 @@ int perturb_workspace_init(
       if (pba->has_NEDE_trigger)
       {
         ppw->approx[ppw->index_ap_tfa] = (int)tfa_off;
+        ppw->approx[ppw->index_ap_tavg] = (int)tavg_off;
       }
     }
 
@@ -3759,10 +3761,16 @@ int perturb_find_approximation_switches(
 
             if (pba->has_NEDE_trigger_DM)
             {
-              if ((interval_approx[index_switch - 1][ppw->index_ap_tfa] == (int)CCa_off) &&
+              if ((interval_approx[index_switch - 1][ppw->index_ap_tfa] == (int)tfa_off) &&
                   (interval_approx[index_switch][ppw->index_ap_tfa] == (int)tfa_on))
               {
                 fprintf(stdout, "Mode k=%e: will switch on trigger fluid approximation at tau=%e\n", k, interval_limit[index_switch]);
+              }
+
+              if ((interval_approx[index_switch - 1][ppw->index_ap_tavg] == (int)tavg_off) &&
+                  (interval_approx[index_switch][ppw->index_ap_tavg] == (int)tavg_on))
+              {
+                fprintf(stdout, "Mode k=%e: will switch on cycle averaging procedure at tau=%e\n", k, interval_limit[index_switch]);
               }
             }
           }
@@ -3874,6 +3882,7 @@ int perturb_vector_init(
   double w_NEDE, dw_over_da_NEDE;
   double delta_p_trigger, rho_plus_p_theta_trigger_fld;
   double w_trigger, cs2_trigger, ca2_trigger, a2, k2;
+  double delta_avg, delta_tau_avg, theta_avg, theta_tau_avg;
 
   /** - allocate a new perturb_vector structure to which ppw-->pv will point at the end of the routine */
 
@@ -4010,9 +4019,13 @@ int perturb_vector_init(
           /* trigger field velocity */
           class_define_index(ppv->index_pt_phi_prime_trigger, pba->has_NEDE_trigger, index_pt, 1);
 
-          class_define_index(ppv->index_pt_delta_trigger_cycle_integral, pba->has_NEDE_trigger_DM, index_pt, 1);
-          
-          class_define_index(ppv->index_pt_theta_hat_trigger_cycle_integral, pba->has_NEDE_trigger_DM, index_pt, 1);
+          if (ppw->approx[ppw->index_ap_tavg] == (int)tavg_on)
+          {
+            class_define_index(ppv->index_pt_delta_trigger_cycle_integral, pba->has_NEDE_trigger_DM, index_pt, 1);
+            class_define_index(ppv->index_pt_theta_hat_trigger_cycle_integral, pba->has_NEDE_trigger_DM, index_pt, 1);
+            class_define_index(ppv->index_pt_delta_t_trigger_cycle_integral, pba->has_NEDE_trigger_DM, index_pt, 1);
+            class_define_index(ppv->index_pt_theta_hat_t_trigger_cycle_integral, pba->has_NEDE_trigger_DM, index_pt, 1);
+          }
         }
         else if ((pba->has_NEDE_trigger_DM == _TRUE_) && (ppw->approx[ppw->index_ap_tfa] == (int)tfa_on))
         {
@@ -4703,11 +4716,20 @@ int perturb_vector_init(
               ppv->y[ppv->index_pt_phi_prime_trigger] =
                   ppw->pv->y[ppw->pv->index_pt_phi_prime_trigger];
 
-              ppv->y[ppv->index_pt_delta_trigger_cycle_integral] =
-                  ppw->pv->y[ppw->pv->index_pt_delta_trigger_cycle_integral];
+              if (ppw->approx[ppw->index_ap_tavg] == (int)tavg_on)
+              {
+                ppv->y[ppv->index_pt_delta_trigger_cycle_integral] =
+                    ppw->pv->y[ppw->pv->index_pt_delta_trigger_cycle_integral];
 
-              ppv->y[ppv->index_pt_theta_hat_trigger_cycle_integral] =
-                  ppw->pv->y[ppw->pv->index_pt_theta_hat_trigger_cycle_integral];
+                ppv->y[ppv->index_pt_theta_hat_trigger_cycle_integral] =
+                    ppw->pv->y[ppw->pv->index_pt_theta_hat_trigger_cycle_integral];
+
+                ppv->y[ppv->index_pt_delta_t_trigger_cycle_integral] =
+                    ppw->pv->y[ppw->pv->index_pt_delta_t_trigger_cycle_integral];
+
+                ppv->y[ppv->index_pt_theta_hat_t_trigger_cycle_integral] =
+                    ppw->pv->y[ppw->pv->index_pt_theta_hat_t_trigger_cycle_integral];
+              }
             }
             else if ((pba->has_NEDE_trigger_DM == _TRUE_) && (ppw->approx[ppw->index_ap_tfa] == (int)tfa_on))
             {
@@ -4827,11 +4849,20 @@ int perturb_vector_init(
               ppv->y[ppv->index_pt_phi_prime_trigger] =
                   ppw->pv->y[ppw->pv->index_pt_phi_prime_trigger];
 
-              ppv->y[ppv->index_pt_delta_trigger_cycle_integral] =
-                  ppw->pv->y[ppw->pv->index_pt_delta_trigger_cycle_integral];
+              if (ppw->approx[ppw->index_ap_tavg] == (int)tavg_on)
+              {
+                ppv->y[ppv->index_pt_delta_trigger_cycle_integral] =
+                    ppw->pv->y[ppw->pv->index_pt_delta_trigger_cycle_integral];
 
-              ppv->y[ppv->index_pt_theta_hat_trigger_cycle_integral] =
-                  ppw->pv->y[ppw->pv->index_pt_theta_hat_trigger_cycle_integral];
+                ppv->y[ppv->index_pt_theta_hat_trigger_cycle_integral] =
+                    ppw->pv->y[ppw->pv->index_pt_theta_hat_trigger_cycle_integral];
+
+                ppv->y[ppv->index_pt_delta_t_trigger_cycle_integral] =
+                    ppw->pv->y[ppw->pv->index_pt_delta_t_trigger_cycle_integral];
+
+                ppv->y[ppv->index_pt_theta_hat_t_trigger_cycle_integral] =
+                    ppw->pv->y[ppw->pv->index_pt_theta_hat_t_trigger_cycle_integral];
+              }
             }
             else if ((pba->has_NEDE_trigger_DM == _TRUE_) && (ppw->approx[ppw->index_ap_tfa] == (int)tfa_on))
             {
@@ -4994,11 +5025,20 @@ int perturb_vector_init(
                 ppv->y[ppv->index_pt_phi_prime_trigger] =
                     ppw->pv->y[ppw->pv->index_pt_phi_prime_trigger];
 
-                ppv->y[ppv->index_pt_delta_trigger_cycle_integral] =
-                    ppw->pv->y[ppw->pv->index_pt_delta_trigger_cycle_integral];
+                if (ppw->approx[ppw->index_ap_tavg] == (int)tavg_on)
+                {
+                  ppv->y[ppv->index_pt_delta_trigger_cycle_integral] =
+                      ppw->pv->y[ppw->pv->index_pt_delta_trigger_cycle_integral];
 
-                ppv->y[ppv->index_pt_theta_hat_trigger_cycle_integral] =
-                    ppw->pv->y[ppw->pv->index_pt_theta_hat_trigger_cycle_integral];
+                  ppv->y[ppv->index_pt_theta_hat_trigger_cycle_integral] =
+                      ppw->pv->y[ppw->pv->index_pt_theta_hat_trigger_cycle_integral];
+
+                  ppv->y[ppv->index_pt_delta_t_trigger_cycle_integral] =
+                      ppw->pv->y[ppw->pv->index_pt_delta_t_trigger_cycle_integral];
+
+                  ppv->y[ppv->index_pt_theta_hat_t_trigger_cycle_integral] =
+                      ppw->pv->y[ppw->pv->index_pt_theta_hat_t_trigger_cycle_integral];
+                }
               }
               else if ((pba->has_NEDE_trigger_DM == _TRUE_) && (ppw->approx[ppw->index_ap_tfa] == (int)tfa_on))
               {
@@ -5141,11 +5181,20 @@ int perturb_vector_init(
                 ppv->y[ppv->index_pt_phi_prime_trigger] =
                     ppw->pv->y[ppw->pv->index_pt_phi_prime_trigger];
 
-                ppv->y[ppv->index_pt_delta_trigger_cycle_integral] =
-                    ppw->pv->y[ppw->pv->index_pt_delta_trigger_cycle_integral];
+                if (ppw->approx[ppw->index_ap_tavg] == (int)tavg_on)
+                {
+                  ppv->y[ppv->index_pt_delta_trigger_cycle_integral] =
+                      ppw->pv->y[ppw->pv->index_pt_delta_trigger_cycle_integral];
 
-                ppv->y[ppv->index_pt_theta_hat_trigger_cycle_integral] =
-                    ppw->pv->y[ppw->pv->index_pt_theta_hat_trigger_cycle_integral];
+                  ppv->y[ppv->index_pt_theta_hat_trigger_cycle_integral] =
+                      ppw->pv->y[ppw->pv->index_pt_theta_hat_trigger_cycle_integral];
+
+                  ppv->y[ppv->index_pt_delta_t_trigger_cycle_integral] =
+                      ppw->pv->y[ppw->pv->index_pt_delta_t_trigger_cycle_integral];
+
+                  ppv->y[ppv->index_pt_theta_hat_t_trigger_cycle_integral] =
+                      ppw->pv->y[ppw->pv->index_pt_theta_hat_t_trigger_cycle_integral];
+                }
               }
               else if ((pba->has_NEDE_trigger_DM == _TRUE_) && (ppw->approx[ppw->index_ap_tfa] == (int)tfa_on))
               {
@@ -5308,11 +5357,20 @@ int perturb_vector_init(
                 ppv->y[ppv->index_pt_phi_prime_trigger] =
                     ppw->pv->y[ppw->pv->index_pt_phi_prime_trigger];
 
-                ppv->y[ppv->index_pt_delta_trigger_cycle_integral] =
-                    ppw->pv->y[ppw->pv->index_pt_delta_trigger_cycle_integral];
+                if (ppw->approx[ppw->index_ap_tavg] == (int)tavg_on)
+                {
+                  ppv->y[ppv->index_pt_delta_trigger_cycle_integral] =
+                      ppw->pv->y[ppw->pv->index_pt_delta_trigger_cycle_integral];
 
-                ppv->y[ppv->index_pt_theta_hat_trigger_cycle_integral] =
-                    ppw->pv->y[ppw->pv->index_pt_theta_hat_trigger_cycle_integral];
+                  ppv->y[ppv->index_pt_theta_hat_trigger_cycle_integral] =
+                      ppw->pv->y[ppw->pv->index_pt_theta_hat_trigger_cycle_integral];
+
+                  ppv->y[ppv->index_pt_delta_t_trigger_cycle_integral] =
+                      ppw->pv->y[ppw->pv->index_pt_delta_t_trigger_cycle_integral];
+
+                  ppv->y[ppv->index_pt_theta_hat_t_trigger_cycle_integral] =
+                      ppw->pv->y[ppw->pv->index_pt_theta_hat_t_trigger_cycle_integral];
+                }
               }
               else if ((pba->has_NEDE_trigger_DM == _TRUE_) && (ppw->approx[ppw->index_ap_tfa] == (int)tfa_on))
               {
@@ -5441,11 +5499,20 @@ int perturb_vector_init(
                 ppv->y[ppv->index_pt_phi_prime_trigger] =
                     ppw->pv->y[ppw->pv->index_pt_phi_prime_trigger];
 
-                ppv->y[ppv->index_pt_delta_trigger_cycle_integral] =
-                    ppw->pv->y[ppw->pv->index_pt_delta_trigger_cycle_integral];
+                if (ppw->approx[ppw->index_ap_tavg] == (int)tavg_on)
+                {
+                  ppv->y[ppv->index_pt_delta_trigger_cycle_integral] =
+                      ppw->pv->y[ppw->pv->index_pt_delta_trigger_cycle_integral];
 
-                ppv->y[ppv->index_pt_theta_hat_trigger_cycle_integral] =
-                    ppw->pv->y[ppw->pv->index_pt_theta_hat_trigger_cycle_integral];
+                  ppv->y[ppv->index_pt_theta_hat_trigger_cycle_integral] =
+                      ppw->pv->y[ppw->pv->index_pt_theta_hat_trigger_cycle_integral];
+
+                  ppv->y[ppv->index_pt_delta_t_trigger_cycle_integral] =
+                      ppw->pv->y[ppw->pv->index_pt_delta_t_trigger_cycle_integral];
+
+                  ppv->y[ppv->index_pt_theta_hat_t_trigger_cycle_integral] =
+                      ppw->pv->y[ppw->pv->index_pt_theta_hat_t_trigger_cycle_integral];
+                }
               }
               else if ((pba->has_NEDE_trigger_DM == _TRUE_) && (ppw->approx[ppw->index_ap_tfa] == (int)tfa_on))
               {
@@ -5702,11 +5769,20 @@ int perturb_vector_init(
               ppv->y[ppv->index_pt_phi_prime_trigger] =
                   ppw->pv->y[ppw->pv->index_pt_phi_prime_trigger];
 
-              ppv->y[ppv->index_pt_delta_trigger_cycle_integral] =
-                  ppw->pv->y[ppw->pv->index_pt_delta_trigger_cycle_integral];
+              if (ppw->approx[ppw->index_ap_tavg] == (int)tavg_on)
+              {
+                ppv->y[ppv->index_pt_delta_trigger_cycle_integral] =
+                    ppw->pv->y[ppw->pv->index_pt_delta_trigger_cycle_integral];
 
-              ppv->y[ppv->index_pt_theta_hat_trigger_cycle_integral] =
-                  ppw->pv->y[ppw->pv->index_pt_theta_hat_trigger_cycle_integral];
+                ppv->y[ppv->index_pt_theta_hat_trigger_cycle_integral] =
+                    ppw->pv->y[ppw->pv->index_pt_theta_hat_trigger_cycle_integral];
+
+                ppv->y[ppv->index_pt_delta_t_trigger_cycle_integral] =
+                    ppw->pv->y[ppw->pv->index_pt_delta_t_trigger_cycle_integral];
+
+                ppv->y[ppv->index_pt_theta_hat_t_trigger_cycle_integral] =
+                    ppw->pv->y[ppw->pv->index_pt_theta_hat_t_trigger_cycle_integral];
+              }
             }
             else if (ppw->approx[ppw->index_ap_tfa] == (int)tfa_on)
             {
@@ -5737,7 +5813,9 @@ int perturb_vector_init(
             }
           }
         }
-        /*New EDE: Here we stop tracking the evolution of NEDE perturbations as the NEDE fluid has becomes sufficiently suppressed.*/
+
+        /*New EDE: Here we stop tracking the evolution of NEDE
+        perturbations as the NEDE fluid has becomes sufficiently suppressed.*/
         if ((pa_old[ppw->index_ap_sda] == (int)sda_off) && (ppw->approx[ppw->index_ap_sda] == (int)sda_on))
         {
 
@@ -5858,8 +5936,7 @@ int perturb_vector_init(
               {
                 for (l = 0; l <= ppv->l_max_ncdm[n_ncdm]; l++)
                 {
-                  /* This is correct even when ncdmfa == off, since ppv->l_max_ncdm and
-+                      ppv->q_size_ncdm is updated.*/
+                  /* This is correct even when ncdmfa == off, since ppv->l_max_ncdm and ppv->q_size_ncdm is updated.*/
                   ppv->y[ppv->index_pt_psi0_ncdm1 + index_pt] =
                       ppw->pv->y[ppw->pv->index_pt_psi0_ncdm1 + index_pt];
                   index_pt++;
@@ -5880,11 +5957,197 @@ int perturb_vector_init(
               ppv->y[ppv->index_pt_phi_prime_trigger] =
                   ppw->pv->y[ppw->pv->index_pt_phi_prime_trigger];
 
-              ppv->y[ppv->index_pt_delta_trigger_cycle_integral] =
-                  ppw->pv->y[ppw->pv->index_pt_delta_trigger_cycle_integral];
+              if (ppw->approx[ppw->index_ap_tavg] == (int)tavg_on)
+              {
+                ppv->y[ppv->index_pt_delta_trigger_cycle_integral] =
+                    ppw->pv->y[ppw->pv->index_pt_delta_trigger_cycle_integral];
 
-              ppv->y[ppv->index_pt_theta_hat_trigger_cycle_integral] =
-                  ppw->pv->y[ppw->pv->index_pt_theta_hat_trigger_cycle_integral];
+                ppv->y[ppv->index_pt_theta_hat_trigger_cycle_integral] =
+                    ppw->pv->y[ppw->pv->index_pt_theta_hat_trigger_cycle_integral];
+
+                ppv->y[ppv->index_pt_delta_t_trigger_cycle_integral] =
+                    ppw->pv->y[ppw->pv->index_pt_delta_t_trigger_cycle_integral];
+
+                ppv->y[ppv->index_pt_theta_hat_t_trigger_cycle_integral] =
+                    ppw->pv->y[ppw->pv->index_pt_theta_hat_t_trigger_cycle_integral];
+              }
+            }
+            else if (ppw->approx[ppw->index_ap_tfa] == (int)tfa_on)
+            {
+              ppv->y[ppv->index_pt_delta_trigger_fld] =
+                  ppw->pv->y[ppw->pv->index_pt_delta_trigger_fld];
+
+              ppv->y[ppv->index_pt_theta_trigger_fld] =
+                  ppw->pv->y[ppw->pv->index_pt_theta_trigger_fld];
+            }
+          }
+        }
+
+        /*New EDE: Here we start the trigger averaging procedure.*/
+        if ((pa_old[ppw->index_ap_tavg] == (int)tavg_off) && (ppw->approx[ppw->index_ap_tavg] == (int)tavg_on))
+        {
+
+          if (ppt->perturbations_verbose > 2)
+            fprintf(stdout, "Start trigger averaging procedure for mode k=%e at tau=%e\n", k, tau);
+
+          if (ppw->approx[ppw->index_ap_rsa] == (int)rsa_off)
+          {
+
+            ppv->y[ppv->index_pt_delta_g] =
+                ppw->pv->y[ppw->pv->index_pt_delta_g];
+
+            ppv->y[ppv->index_pt_theta_g] =
+                ppw->pv->y[ppw->pv->index_pt_theta_g];
+          }
+          if ((ppw->approx[ppw->index_ap_tca] == (int)tca_off) && (ppw->approx[ppw->index_ap_rsa] == (int)rsa_off))
+          {
+
+            ppv->y[ppv->index_pt_shear_g] =
+                ppw->pv->y[ppw->pv->index_pt_shear_g];
+
+            ppv->y[ppv->index_pt_l3_g] =
+                ppw->pv->y[ppw->pv->index_pt_l3_g];
+
+            for (l = 4; l <= ppw->pv->l_max_g; l++)
+            {
+
+              ppv->y[ppv->index_pt_delta_g + l] =
+                  ppw->pv->y[ppw->pv->index_pt_delta_g + l];
+            }
+
+            ppv->y[ppv->index_pt_pol0_g] =
+                ppw->pv->y[ppw->pv->index_pt_pol0_g];
+
+            ppv->y[ppv->index_pt_pol1_g] =
+                ppw->pv->y[ppw->pv->index_pt_pol1_g];
+
+            ppv->y[ppv->index_pt_pol2_g] =
+                ppw->pv->y[ppw->pv->index_pt_pol2_g];
+
+            ppv->y[ppv->index_pt_pol3_g] =
+                ppw->pv->y[ppw->pv->index_pt_pol3_g];
+
+            for (l = 4; l <= ppw->pv->l_max_pol_g; l++)
+            {
+
+              ppv->y[ppv->index_pt_pol0_g + l] =
+                  ppw->pv->y[ppw->pv->index_pt_pol0_g + l];
+            }
+          }
+
+          if (pba->has_ur == _TRUE_)
+          {
+
+            if (ppw->approx[ppw->index_ap_rsa] == (int)rsa_off)
+            {
+
+              ppv->y[ppv->index_pt_delta_ur] =
+                  ppw->pv->y[ppw->pv->index_pt_delta_ur];
+
+              ppv->y[ppv->index_pt_theta_ur] =
+                  ppw->pv->y[ppw->pv->index_pt_theta_ur];
+
+              ppv->y[ppv->index_pt_shear_ur] =
+                  ppw->pv->y[ppw->pv->index_pt_shear_ur];
+
+              if (ppw->approx[ppw->index_ap_ufa] == (int)ufa_off)
+              {
+
+                ppv->y[ppv->index_pt_l3_ur] =
+                    ppw->pv->y[ppw->pv->index_pt_l3_ur];
+
+                for (l = 4; l <= ppv->l_max_ur; l++)
+                  ppv->y[ppv->index_pt_delta_ur + l] =
+                      ppw->pv->y[ppw->pv->index_pt_delta_ur + l];
+              }
+            }
+          }
+
+          if (pba->has_idr == _TRUE_)
+          {
+
+            if (ppw->approx[ppw->index_ap_rsa_idr] == (int)rsa_idr_off)
+            {
+
+              ppv->y[ppv->index_pt_delta_idr] =
+                  ppw->pv->y[ppw->pv->index_pt_delta_idr];
+
+              ppv->y[ppv->index_pt_theta_idr] =
+                  ppw->pv->y[ppw->pv->index_pt_theta_idr];
+
+              if (ppt->idr_nature == idr_free_streaming)
+              {
+
+                if ((pba->has_idm_dr == _FALSE_) || ((pba->has_idm_dr == _TRUE_) && (ppw->approx[ppw->index_ap_tca_idm_dr] == (int)tca_idm_dr_off)))
+                {
+
+                  ppv->y[ppv->index_pt_shear_idr] =
+                      ppw->pv->y[ppw->pv->index_pt_shear_idr];
+
+                  ppv->y[ppv->index_pt_l3_idr] =
+                      ppw->pv->y[ppw->pv->index_pt_l3_idr];
+
+                  for (l = 4; l <= ppv->l_max_idr; l++)
+                    ppv->y[ppv->index_pt_delta_idr + l] =
+                        ppw->pv->y[ppw->pv->index_pt_delta_idr + l];
+                }
+              }
+            }
+          }
+
+          if (pba->has_ncdm == _TRUE_)
+          {
+            index_pt = 0;
+            for (n_ncdm = 0; n_ncdm < ppv->N_ncdm; n_ncdm++)
+            {
+              for (index_q = 0; index_q < ppv->q_size_ncdm[n_ncdm]; index_q++)
+              {
+                for (l = 0; l <= ppv->l_max_ncdm[n_ncdm]; l++)
+                {
+                  /* This is correct even when ncdmfa == off, since ppv->l_max_ncdm and ppv->q_size_ncdm is updated.*/
+                  ppv->y[ppv->index_pt_psi0_ncdm1 + index_pt] =
+                      ppw->pv->y[ppw->pv->index_pt_psi0_ncdm1 + index_pt];
+                  index_pt++;
+                }
+              }
+            }
+          }
+
+          if ((ppw->approx[ppw->index_ap_sda] == (int)sda_off) && (ppw->approx[ppw->index_ap_CCa] == (int)CCa_off))
+          {
+            ppv->y[ppv->index_pt_delta_NEDE] =
+                ppw->pv->y[ppw->pv->index_pt_delta_NEDE];
+
+            ppv->y[ppv->index_pt_theta_NEDE] =
+                ppw->pv->y[ppw->pv->index_pt_theta_NEDE];
+
+            ppv->y[ppv->index_pt_shear_NEDE] =
+                ppw->pv->y[ppw->pv->index_pt_shear_NEDE];
+          }
+
+          /* We still track the trigger if we are in the trigger DM scenario.*/
+
+          if (pba->has_NEDE_trigger_DM == _TRUE_)
+          {
+            if (ppw->approx[ppw->index_ap_tfa] == (int)tfa_off)
+            {
+              ppv->y[ppv->index_pt_phi_trigger] =
+                  ppw->pv->y[ppw->pv->index_pt_phi_trigger];
+
+              ppv->y[ppv->index_pt_phi_prime_trigger] =
+                  ppw->pv->y[ppw->pv->index_pt_phi_prime_trigger];
+
+              // Here we start / initialise the averaging procedure.
+              if (ppw->approx[ppw->index_ap_tavg] == (int)tavg_on)
+              {
+                ppv->y[ppv->index_pt_delta_trigger_cycle_integral] = 0.0;
+
+                ppv->y[ppv->index_pt_theta_hat_trigger_cycle_integral] = 0.0;
+
+                ppv->y[ppv->index_pt_delta_t_trigger_cycle_integral] = 0.0;
+
+                ppv->y[ppv->index_pt_theta_hat_t_trigger_cycle_integral] = 0.0;
+              }
             }
             else if (ppw->approx[ppw->index_ap_tfa] == (int)tfa_on)
             {
@@ -6001,7 +6264,7 @@ int perturb_vector_init(
                     ppw->pv->y[ppw->pv->index_pt_shear_NEDE];
               }
 
-              // New EDE: Here we set the initial conditions for the NEDE trigger field in the fluid approximation.
+              // New EDE: Here we do the matching for he NEDE trigger field perturbations when the fluid approximation starts.
               a = ppw->pvecback[pba->index_bg_a];
               a_prime_over_a = ppw->pvecback[pba->index_bg_H] * a;
               a2 = a * a;
@@ -6015,11 +6278,18 @@ int perturb_vector_init(
 
               rho_plus_p_theta_trigger_fld = 1. / 3. * k2 / a2 * ppw->pvecback[pba->index_bg_phi_prime_trigger] * ppw->pv->y[ppw->pv->index_pt_phi_trigger];
 
-              // printf("k: %f, delta-rho: %e, rho_plus_p_theta_trigger_fld: %e, cs: %e, x: %e \n", k, delta_rho_trigger, rho_plus_p_theta_trigger_fld, cs2_trigger,ppw->pv->y[ppw->pv->index_pt_phi_trigger]);
+              // printf("k: %f, ma: %f , naive delta-rho: %e, average: %e, cs: %e, x: %e \n", k, pba->NEDE_trigger_mass * a, rho_plus_p_theta_trigger_fld, ppw->pv->y[ppw->pv->index_pt_theta_hat_trigger_cycle_integral] / (pba->tau_trigger_fluid - pba->tau_trigger_average_start), cs2_trigger, ppw->pv->y[ppw->pv->index_pt_phi_trigger]);
 
-              ppv->y[ppv->index_pt_delta_trigger_fld] = delta_rho_trigger / ppw->pvecback[pba->index_bg_rho_trigger];
+              // delta_avg = ppw->pv->y[ppw->pv->index_pt_delta_trigger_cycle_integral] / (pba->tau_trigger_fluid - pba->tau_trigger_average_start) / pba->rho_avg_trigger_fld;
+              // delta_tau_avg = ppw->pv->y[ppw->pv->index_pt_delta_t_trigger_cycle_integral] / (pba->tau_trigger_fluid - pba->tau_trigger_average_start) / pba->rho_avg_trigger_fld;
+              // theta_avg = ppw->pv->y[ppw->pv->index_pt_theta_hat_trigger_cycle_integral] / (pba->tau_trigger_fluid - pba->tau_trigger_average_start) / pba->rho_avg_trigger_fld;
+              // theta_tau_avg = ppw->pv->y[ppw->pv->index_pt_theta_hat_t_trigger_cycle_integral] / (pba->tau_trigger_fluid - pba->tau_trigger_average_start) / pba->rho_avg_trigger_fld;
 
-              ppv->y[ppv->index_pt_theta_trigger_fld] = rho_plus_p_theta_trigger_fld / (ppw->pvecback[pba->index_bg_rho_trigger] + 0. * ppw->pvecback[pba->index_bg_p_trigger]);
+              ppv->y[ppv->index_pt_delta_trigger_fld] = ppw->pv->y[ppw->pv->index_pt_delta_trigger_cycle_integral] / ppw->pv->y[ppw->pv->index_pt_theta_hat_t_trigger_cycle_integral] / pba->rho_avg_trigger_fld; // 4 * delta_avg + 6 * (delta_tau_avg - delta_avg * tau) / (pba->tau_trigger_fluid - pba->tau_trigger_average_start);  // delta_rho_trigger / ppw->pvecback[pba->index_bg_rho_trigger];
+
+              ppv->y[ppv->index_pt_theta_trigger_fld] = ppw->pv->y[ppw->pv->index_pt_theta_hat_trigger_cycle_integral] / ppw->pv->y[ppw->pv->index_pt_theta_hat_t_trigger_cycle_integral] / pba->rho_avg_trigger_fld; // 4 * theta_avg + 6 * (theta_tau_avg - theta_avg * tau) / (pba->tau_trigger_fluid - pba->tau_trigger_average_start); // ppw->pv->y[ppw->pv->index_pt_theta_hat_trigger_cycle_integral] / (pba->tau_trigger_fluid - pba->tau_trigger_average_start) / pba->rho_avg_trigger_fld; // rho_plus_p_theta_trigger_fld / (ppw->pvecback[pba->index_bg_rho_trigger] + 0. * ppw->pvecback[pba->index_bg_p_trigger]);
+
+              // printf("k: %f, ma: %f , naive delta-rho: %e, average: %e,m cs: %e, x: %e \n", k, pba->NEDE_trigger_mass * a, delta_rho_trigger, ppw->pv->y[ppw->pv->index_pt_delta_trigger_cycle_integral] / ppw->pv->y[ppw->pv->index_pt_theta_hat_t_trigger_cycle_integral], cs2_trigger, ppw->pv->y[ppw->pv->index_pt_phi_trigger]);
             }
 
             if (pba->has_idr == _TRUE_)
@@ -6525,13 +6795,6 @@ int perturb_initial_conditions(struct precision *ppr,
           ppw->pv->y[ppw->pv->index_pt_phi_trigger] = -1. / 140. * pba->phi_ini_trigger * ppw->pv->y[ppw->pv->index_pt_delta_g] * pow(pba->NEDE_trigger_mass / ppw->pvecback[pba->index_bg_H], 2);
 
           ppw->pv->y[ppw->pv->index_pt_phi_prime_trigger] = -3. / 70. * pba->phi_ini_trigger * ppw->pv->y[ppw->pv->index_pt_delta_g] * pow(pba->NEDE_trigger_mass, 2) * a / ppw->pvecback[pba->index_bg_H];
-
-          if (pba->has_NEDE_trigger_DM == _TRUE_)
-          {
-            ppw->pv->y[ppw->pv->index_pt_delta_trigger_cycle_integral] = 0.0;
-
-            ppw->pv->y[ppw->pv->index_pt_theta_hat_trigger_cycle_integral] = 0.0;
-          }
         }
         else
         {
@@ -7110,6 +7373,8 @@ int perturb_approximations(
   /* (c) time scale of recombination, \f$ \tau_{\gamma} = 1/\kappa' \f$ */
   double tau_c;
 
+  double a, H, H_start_averaging;
+
   /** - compute Fourier mode time scale = \f$ \tau_k = 1/k \f$ */
 
   class_test(k == 0.,
@@ -7263,6 +7528,27 @@ int perturb_approximations(
         else
         {
           ppw->approx[ppw->index_ap_tfa] = (int)tfa_on;
+        }
+
+        if ((ppw->pvecback[pba->index_bg_a] > pba->a_trigger_average_start) && (pba->has_NEDE_trigger_DM == _TRUE_))
+        {
+          /* class_call(background_at_tau(pba, tau, pba->long_info, ppw->inter_mode, &(ppw->last_index_back), ppw->pvecback),
+                      pba->error_message,
+                      ppt->error_message);*/
+          a = ppw->pvecback[pba->index_bg_a];
+          H = ppw->pvecback[pba->index_bg_H];
+
+          //printf("t: %f ",ppw->pvecback[pba->index_bg_time]);
+          // H_start_averaging = pba->Trigger_fluid_H_over_m * pba->NEDE_trigger_mass * (1. + 2. * _PI_ / pow(pba->NEDE_trigger_mass * pba->NEDE_trigger_mass + k * k / (a * a), 0.5) / ppw->pvecback[pba->index_bg_time]);
+
+          // if (H_start_averaging > H)
+          ppw->approx[ppw->index_ap_tavg] = (int)tavg_on;
+          // else
+          //  ppw->approx[ppw->index_ap_tavg] = (int)tavg_off;
+        }
+        else
+        {
+          ppw->approx[ppw->index_ap_tavg] = (int)tavg_off;
         }
       }
     }
@@ -10890,17 +11176,17 @@ int perturb_derivs(double tau,
           dy[pv->index_pt_phi_prime_trigger] = -2. * a_prime_over_a * y[pv->index_pt_phi_prime_trigger] - metric_continuity * pvecback[pba->index_bg_phi_prime_trigger] //  metric_continuity = h'/2
                                                - (k2 + a2 * pvecback[pba->index_bg_ddV_trigger]) * y[pv->index_pt_phi_trigger];
 
-          if ((pba->has_NEDE_trigger_DM == _TRUE_) && (ppw->approx[ppw->index_ap_tfa] == (int)tfa_off))
+          if (pba->has_NEDE_trigger_DM == _TRUE_)
           {
-            if (pba->trigger_fluid_flag_0 == _TRUE_)
+            if ((ppw->approx[ppw->index_ap_tavg] == (int)tavg_on) && (ppw->approx[ppw->index_ap_tfa] == (int)tfa_off))
             {
-              dy[pv->index_pt_delta_trigger_cycle_integral] = 0.0;
-              dy[pv->index_pt_theta_hat_trigger_cycle_integral] = 0.0;
-            }
-            else
-            {
-              dy[pv->index_pt_delta_trigger_cycle_integral] = 0.0;
-              dy[pv->index_pt_theta_hat_trigger_cycle_integral] = 0.0;
+              dy[pv->index_pt_delta_trigger_cycle_integral] = 1. / 3. *
+                                                              (1. / a2 * pvecback[pba->index_bg_phi_prime_trigger] * y[pv->index_pt_phi_prime_trigger] + pvecback[pba->index_bg_dV_trigger] * y[pv->index_pt_phi_trigger]);
+              dy[pv->index_pt_theta_hat_trigger_cycle_integral] = 1. / 3. * k2 / a2 * pvecback[pba->index_bg_phi_prime_trigger] * y[pv->index_pt_phi_trigger];
+
+              dy[pv->index_pt_delta_t_trigger_cycle_integral] = tau * 1. / 3. *
+                                                                (1. / a2 * pvecback[pba->index_bg_phi_prime_trigger] * y[pv->index_pt_phi_prime_trigger] + pvecback[pba->index_bg_dV_trigger] * y[pv->index_pt_phi_trigger]);
+              dy[pv->index_pt_theta_hat_t_trigger_cycle_integral] = 1.0; // tau * 1. / 3. * k2 / a2 * pvecback[pba->index_bg_phi_prime_trigger] * y[pv->index_pt_phi_trigger];
             }
           }
         }

@@ -2073,6 +2073,8 @@ int background_solve(
           pba->trigger_fluid_flag = _TRUE_;
           pba->a_trigger_fluid = a;
           pba->z_trigger_fluid = 1. / a - 1.;
+          pba->t_trigger_fluid = pvecback_integration[pba->index_bi_time];
+          pba->tau_trigger_fluid = tau_start;
           pba->rho_trigger_fluid = pvecback[pba->index_bg_rho_trigger];
           pba->rho_avg_trigger_fld = pvecback_integration[pba->index_bi_rho_avg_trigger] / pow(a, 3) / (tau_start - pba->tau_trigger_average_start);
           if (pba->background_verbose > 1)
