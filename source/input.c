@@ -457,7 +457,7 @@ int input_init(
       for (counter = 0; counter < unknown_parameters_size; counter++)
       {
         fzw.counter = counter;
-        printf("counter: %d, xinout1 %f, xinout2 %f, size: %d ", counter, x_inout[0], x_inout[1], unknown_parameters_size);
+        // printf("counter: %d, xinout1 %f, xinout2 %f, size: %d ", counter, x_inout[0], x_inout[1], unknown_parameters_size);
         class_call_try(input_find_root_NEDE(x_inout,
                                             dxdF,
                                             counter,
@@ -479,8 +479,6 @@ int input_init(
         }
       }
 
-
-     
       free(x_inout);
       free(dxdF);
     }
@@ -1427,6 +1425,9 @@ int input_read_parameters(
   {
     class_test(pba->z_decay == 0, errmsg,
                "In input file, z_decay_NEDE  needs to be specified for NEDE (The trigger mass as input parameter has been retired in v5).");
+    
+    class_test((pba->z_decay < 500) && (pba->z_decay > 0) , errmsg,
+               "z_decay should be larger than 500. For a later decay the code has not been tested. Proceed with extreme care.");
 
     if (pba->Omega_NEDE == 0)
       pba->Omega_NEDE = pba->f_NEDE * pow(pba->NEDE_trigger_mass * pba->Bubble_trigger_H_over_m / pba->H0, 2);
@@ -1439,15 +1440,17 @@ int input_read_parameters(
       pba->phi_prime_ini_trigger = 0; // This value is set to the attractor later.
 
       if (pba->Omega0_trigger == 0)
-        class_test(pba->NEDE_trigger_ini > 0.01, errmsg,
+        class_test(pba->NEDE_trigger_ini > 0.005, errmsg,
                    "The initial value for the trigger field is too large for it to be negligible. Either reduce it or use Omega0_NEDE_trigger_DM as input.");
     }
 
-    if (pba->Trigger_fluid_H_over_m > 0){
-       class_test(pba->Trigger_fluid_H_over_m  > pba->Bubble_trigger_H_over_m, errmsg,
-                   "The trigger fluid approximation cannot be applied before the transition. Reduce therefore 'NEDE_trigger_fluid_H_m'.");
-  
+    if (pba->Trigger_fluid_H_over_m > 0)
+    {
+      class_test(pba->Trigger_fluid_H_over_m > pba->Bubble_trigger_H_over_m, errmsg,
+                 "The trigger fluid approximation cannot be applied before the transition. Reduce therefore 'NEDE_trigger_fluid_H_m'.");
 
+      class_test(pba->Trigger_fluid_H_over_m > 0.05, errmsg,
+                 "The trigger fluid approximation can only be applied when trigger oscillations are fast on cosmological time scale. Reduce therefore 'NEDE_trigger_fluid_H_m' below 0.05.");
     }
 
     class_test(pba->f_NEDE > 0.4, errmsg,
@@ -3645,7 +3648,6 @@ int input_default_params(
   pba->NEDE_trigger_mass = 0.;
   pba->z_decay = 0.;
   pba->a_decay = 0.;
-  
 
   pba->a_trigger_fluid = 1.1; // This value is to large to be ever relevant. In other words, the default is not to switch on fluid approximation.
   pba->a_trigger_average_start = 1.1;
@@ -4356,13 +4358,13 @@ int input_try_unknown_parameters(double *unknown_parameter,
     case z_decay_NEDE: // NEDE shooting
       output[i] = (ba.z_decay - pfzw->target_value[i]);
       // output[i] = output[i] / pfzw->target_value[i];
-      printf("z_decay: %f\n", ba.z_decay);
+      // printf("z_decay: %f\n", ba.z_decay);
       // z_decay_temp=ba.z_decay;
       break;
     case Omega0_NEDE_trigger_DM: // NEDE shooting
       output[i] = ba.Omega0_trigger - pfzw->target_value[i];
       // output[i] = output[i] / pfzw->target_value[i];
-      printf("Omega0_trigger: %f \n", ba.Omega0_trigger);
+      // printf("Omega0_trigger: %f \n", ba.Omega0_trigger);
       break;
     }
   }
@@ -4425,7 +4427,7 @@ int input_get_guess(double *xguess,
   int i;
 
   double Omega_M, a_decay, gamma, Omega0_dcdmdr = 1.0;
-  double trigger_mass, decay_redshift;
+  double trigger_mass, decay_redshift, z_NEDE;
   int index_guess;
 
   /* Cheat to read only known parameters: */
@@ -4566,27 +4568,35 @@ int input_get_guess(double *xguess,
       break;
 
     case z_decay_NEDE: // Guess for NEDE shooting.
-      trigger_mass = pow(pfzw->target_value[index_guess], 2.) / pow(ba.Bubble_trigger_H_over_m * 1250., 2.);
-      decay_redshift = pfzw->target_value[index_guess];
+      Omega_M = ba.Omega0_cdm + ba.Omega0_idm_dr + Omega0_dcdmdr + ba.Omega0_b+ba.Omega0_ncdm_tot;
+      z_NEDE = pfzw->target_value[index_guess];
+      trigger_mass = ba.H0 / ba.Bubble_trigger_H_over_m * pow(1. / (1. - ba.f_NEDE), 0.5) * pow(Omega_M * pow((1. + z_NEDE), 3) + Omega_M * pow((1. + z_NEDE), 4) / (3001.) + (1. - Omega_M), 0.5);
+
+      // trigger_mass = pow(pfzw->target_value[index_guess], 2.) / pow(ba.Bubble_trigger_H_over_m * 1250., 2.);
+
       xguess[index_guess] = trigger_mass;
-      dxdy[index_guess] = 2 * pfzw->target_value[index_guess] / pow(ba.Bubble_trigger_H_over_m * 1250., 2.);
-      // dxdy[index_guess] = dxdy[index_guess] * pfzw->target_value[index_guess];
+      // dxdy[index_guess] = 2 * pfzw->target_value[index_guess] / pow(ba.Bubble_trigger_H_over_m * 1250., 2.);
+      dxdy[index_guess] = 0.5 * trigger_mass * (3. * Omega_M * pow((1. + z_NEDE), 2) + 4. * Omega_M * pow((1. + z_NEDE), 3) / (3001.) )/(Omega_M * pow((1. + z_NEDE), 3) + Omega_M * pow((1. + z_NEDE), 4) / (3001.) + (1. - Omega_M));
       printf("xguess = %g,dxdy=%g \n", xguess[index_guess], dxdy[index_guess]);
+      printf("val: %f \n", z_NEDE);
       break;
 
     case Omega0_NEDE_trigger_DM: // Guess for NEDE shooting.
-      decay_redshift = pfzw->target_value[index_guess - 1];
-      trigger_mass = pow(decay_redshift, 2.) / pow(ba.Bubble_trigger_H_over_m * 1200., 2.);
-      xguess[index_guess] = pow(50 * ba.H0 * ba.H0 * pfzw->target_value[index_guess] * pow(decay_redshift, 3) / pow(trigger_mass, 2), 0.5);
+      z_NEDE = ba.z_decay;
+      
+      Omega_M = ba.Omega0_cdm + ba.Omega0_idm_dr + Omega0_dcdmdr + ba.Omega0_b+ba.Omega0_ncdm_tot;;
+      trigger_mass = ba.H0 / ba.Bubble_trigger_H_over_m * pow(1. / (1. - ba.f_NEDE), 0.5) * pow(Omega_M * pow((1. + z_NEDE), 3) + Omega_M * pow((1. + z_NEDE), 4) / (3001.) + (1. - Omega_M), 0.5);
+      //trigger_mass = pow(decay_redshift, 2.) / pow(ba.Bubble_trigger_H_over_m * 1200., 2.);
+      xguess[index_guess] = pow(50. * ba.H0 * ba.H0 * pfzw->target_value[index_guess] * pow(z_NEDE, 3) / pow(trigger_mass, 2), 0.5);
       dxdy[index_guess] = 0.5 * xguess[index_guess] / pfzw->target_value[index_guess];
       // dxdy[index_guess] = dxdy[index_guess] * pfzw->target_value[index_guess];
-      printf("xguess = %g,dxdy=%g, z_decay = %g \n", xguess[index_guess], dxdy[index_guess], decay_redshift);
+       printf("xguess = %g,dxdy=%g, z_decay = %g \n", xguess[index_guess], dxdy[index_guess], decay_redshift);
       break;
     }
     // printf("xguess = %g\n",xguess[index_guess]);
   }
 
-  printf("xinout1: %f, xinout2: %f \n", xguess[0], xguess[1]);
+  // printf("xinout1: %f, xinout2: %f \n", xguess[0], xguess[1]);
   for (i = 0; i < pfzw->fc.size; i++)
   {
     pfzw->fc.read[i] = _FALSE_;

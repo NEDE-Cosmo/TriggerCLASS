@@ -799,6 +799,7 @@ int background_init(
   if (pba->background_verbose > 0)
   {
     printf("Running CLASS version %s\n", _VERSION_);
+    printf("Running TriggerCLASS version v6.0 \n");
     printf("Computing background\n");
 
     /* below we want to inform the user about ncdm species and/or the total N_eff */
@@ -1207,8 +1208,7 @@ int background_indices(
   class_define_index(pba->index_bg_rho_trigger, pba->has_NEDE_trigger, index_bg, 1);
   class_define_index(pba->index_bg_p_trigger, pba->has_NEDE_trigger, index_bg, 1);
   class_define_index(pba->index_bg_p_prime_trigger, pba->has_NEDE_trigger, index_bg, 1);
-  
-  
+
   class_define_index(pba->index_bg_time, _TRUE_, index_bg, 1);
 
   /* - end of indices in the normal vector of background values */
@@ -1232,7 +1232,7 @@ int background_indices(
   class_define_index(pba->index_bg_lum_distance, _TRUE_, index_bg, 1);
 
   /* -> proper time (for age of the Universe) */
-  //class_define_index(pba->index_bg_time, _TRUE_, index_bg, 1);
+  // class_define_index(pba->index_bg_time, _TRUE_, index_bg, 1);
 
   /* -> conformal sound horizon */
   class_define_index(pba->index_bg_rs, _TRUE_, index_bg, 1);
@@ -1285,10 +1285,12 @@ int background_indices(
   class_define_index(pba->index_bi_D_prime, _TRUE_, index_bi, 1);
 
   /* -> trigger field and its derivative wrt conformal time */
-  // it is important that these two components appear at the end of the vector (but still before the conformal time) because we stop integrating them shortly after the decay (they are sub-dominant).
+  // it is important that these two components appear at the end of the vector (but still before the conformal time) because we stop integrating them shortly after the decay (they are sub-dominant); unless we require the trigger not to be subdominant.
   class_define_index(pba->index_bi_phi_trigger, pba->has_NEDE_trigger, index_bi, 1);
   class_define_index(pba->index_bi_phi_prime_trigger, pba->has_NEDE_trigger, index_bi, 1);
-  class_define_index(pba->index_bi_rho_avg_trigger, pba->has_NEDE_trigger_DM, index_bi, 1);
+
+  // New EDE: If the trigger makes a contribution to DM, we have to introduce this component, which is needed for calculating the cycle-average. It is used to calculate rho_trigger in the fluid approximation.
+  class_define_index(pba->index_bi_rho_a_cubed_trigger_avg, pba->has_NEDE_trigger_DM, index_bi, 1);
 
   /* -> index for conformal time in vector of variables to integrate */
   class_define_index(pba->index_bi_tau, _TRUE_, index_bi, 1);
@@ -1928,7 +1930,7 @@ int background_solve(
   double d;
   double w_NEDE, ca2_NEDE;
   double H_start_averaging;
-  short trigger_fluid_flag_local;
+  // short trigger_fluid_flag_local;
 
   bpaw.pba = pba;
   class_alloc(pvecback, pba->bg_size * sizeof(double), pba->error_message);
@@ -1970,7 +1972,7 @@ int background_solve(
   pba->trigger_fluid_flag = _FALSE_;
   pba->trigger_adaptive_stepsize_flag = _FALSE_;
   pba->trigger_fluid_flag_0 = _FALSE_;
-  trigger_fluid_flag_local = _FALSE_;
+  // trigger_fluid_flag_local = _FALSE_;
 
   /** - loop over integration steps: call background_functions(), find step size, save data in growTable with gt_add(), perform one step with generic_integrator(), store new value of tau */
 
@@ -2031,7 +2033,7 @@ int background_solve(
         else
           pba->Omega_trigger_decay = 0.;
 
-        if (pba->background_verbose > 0)
+        if (pba->background_verbose > 3)
         {
           printf("New EDE decayed at redshift: %f ; fraction New EDE: %f; fraction trigger field: %e \n", pba->z_decay, pba->Omega_NEDE * pow(pba->H0, 2) / (pow(pvecback[pba->index_bg_H], 2)), pba->Omega_trigger_decay * pow(pba->H0, 2) / pow(pvecback[pba->index_bg_H], 2));
         }
@@ -2050,23 +2052,25 @@ int background_solve(
       {
         H_start_averaging = pba->Trigger_fluid_H_over_m * pba->NEDE_trigger_mass * (1. + 2. * _PI_ / pba->NEDE_trigger_mass / pvecback_integration[pba->index_bi_time]); // pvecback[pba->index_bg_H] + 2. * _PI_ / pba->NEDE_trigger_mass / a * pvecback[pba->index_bg_H_prime];
 
-        if ((H_start_averaging < pvecback[pba->index_bg_H]) && (trigger_fluid_flag_local == _FALSE_))
-        {
-          trigger_fluid_flag_local = _TRUE_;
-        }
+        // if ((H_start_averaging < pvecback[pba->index_bg_H]) && (trigger_fluid_flag_local == _FALSE_))
+        //{
+        //   trigger_fluid_flag_local = _TRUE_;
+        // }
 
-        if ((H_start_averaging > pvecback[pba->index_bg_H]) && (pba->trigger_fluid_flag_0 == _FALSE_) && (trigger_fluid_flag_local == _TRUE_))
+        // Here we start the cycle-averaging, exactly one cycle before the fluid approximation kicks in.
+        if ((H_start_averaging > pvecback[pba->index_bg_H]) && (pba->trigger_fluid_flag_0 == _FALSE_)) // && (trigger_fluid_flag_local == _TRUE_))
         {
           pba->trigger_fluid_flag_0 = _TRUE_;
           pba->a_trigger_average_start = a;
           pba->tau_trigger_average_start = tau_start;
           pba->t_trigger_average_start = pvecback_integration[pba->index_bi_time];
-          if (pba->background_verbose > 1)
+          if (pba->background_verbose > 3)
           {
             printf("Start calculating the trigger cycle average at z = %f and t = %f. \n", 1. / a - 1., pba->t_trigger_average_start);
           }
         }
 
+        // Here we switch to the fluid approximation.
         if ((pba->trigger_fluid_flag_0 == _TRUE_) && (pvecback_integration[pba->index_bi_time] - pba->t_trigger_average_start) > 2. * _PI_ / pba->NEDE_trigger_mass) //(pba->NEDE_trigger_mass * pba->Trigger_fluid_H_over_m > pvecback[pba->index_bg_H])
         {
           class_test(pba->trigger_fluid_flag_0 == _FALSE_,
@@ -2079,18 +2083,24 @@ int background_solve(
           pba->t_trigger_fluid = pvecback_integration[pba->index_bi_time];
           pba->tau_trigger_fluid = tau_start;
           pba->rho_trigger_fluid = pvecback[pba->index_bg_rho_trigger];
-          pba->rho_avg_trigger_fld = pvecback_integration[pba->index_bi_rho_avg_trigger] / pow(a, 3) / (tau_start - pba->tau_trigger_average_start);
-          if (pba->background_verbose > 1)
+          pba->rho_avg_trigger_fld = pvecback_integration[pba->index_bi_rho_a_cubed_trigger_avg] / pow(a, 3) / (tau_start - pba->tau_trigger_average_start);
+          if (pba->background_verbose > 3)
           {
             printf("NEDE trigger described in terms of cycle-averaged effective fluid at z = %f, tau = %f and H/m = %f; cycle length (in units of 2Pi/m): %f \n", 1. / a - 1., tau_start, pvecback[pba->index_bg_H] / pba->NEDE_trigger_mass, (pvecback_integration[pba->index_bi_time] - pba->t_trigger_average_start) / 2. / _PI_ * pba->NEDE_trigger_mass);
-            printf("Naive rho_trigger: %f , cycle-averaged value: %f \n", pba->rho_trigger_fluid, pba->rho_avg_trigger_fld);
+            // printf("Naive rho_trigger: %f , cycle-averaged value: %f \n", pba->rho_trigger_fluid, pba->rho_avg_trigger_fld);
           }
         }
       }
+
+      // In the case where ew track trigger oscillations, we have to make sure that the integration is accurate enough. Here we adapt the integration step-size correspondingly.
       if (pba->has_NEDE_trigger_DM == _TRUE_)
       {
         if (pba->NEDE_trigger_mass * pba->Trigger_fluid_H_over_m < pvecback[pba->index_bg_H] * 1.05)
         {
+          class_test((.5 / (a * pba->NEDE_trigger_mass) < (tau_end - tau_start)) && (pba->trigger_adaptive_stepsize_flag == _FALSE_),
+                     pba->error_message,
+                     " The step size is not small enough to correctly track the trigger oscillations. Reduce 'trigger_resolution' at least below 0.5. Problem occurs at  z = %f . \n", 1. / a - 1.);
+
           delta_tau = ppr->trigger_resolution / (a * pba->NEDE_trigger_mass);
 
           if (delta_tau < (tau_end - tau_start))
@@ -2100,8 +2110,8 @@ int background_solve(
             if (pba->trigger_adaptive_stepsize_flag == _FALSE_)
             {
               pba->trigger_adaptive_stepsize_flag = _TRUE_;
-              if (pba->background_verbose > 0)
-                printf("Integration stepsize being reduced to describe fast trigger oscillations at redshift %f. This can lead to very long runing times if the fluid approximation does not kick in soonish. \n", 1. / a - 1.);
+              if (pba->background_verbose > 3)
+                printf("Integration stepsize is being being continously reduced to describe fast trigger oscillations from z = %f on. \n", 1. / a - 1.);
             }
           }
         }
@@ -2295,8 +2305,8 @@ int background_solve(
   if (pba->has_NEDE_trigger == _TRUE_ && pba->has_NEDE == _TRUE_)
   {
     pba->Omega0_trigger = pvecback[pba->index_bg_rho_trigger] / pvecback[pba->index_bg_rho_crit];
-    printf("trigger_ini = %e, Omega0_trigger = %e \n", pba->NEDE_trigger_ini, pba->Omega0_trigger);
-    printf("mass_trigger = %e, z_decay = %e \n", pba->NEDE_trigger_mass, pba->z_decay);
+    // printf("trigger_ini = %e, Omega0_trigger = %e \n", pba->NEDE_trigger_ini, pba->Omega0_trigger);
+    // makeprintf("mass_trigger = %e, z_decay = %e \n", pba->NEDE_trigger_mass, pba->z_decay);
   }
 
   if (pba->has_NEDE == _TRUE_)
@@ -2329,7 +2339,7 @@ int background_solve(
     if (pba->has_NEDE == _TRUE_)
     {
 
-      printf("  -> NEDE details:\n");
+      printf(" -> NEDE background details:\n");
       printf("     -> NEDE decay time: %.2f \n", pba->z_decay);
       printf("     -> NEDE fraction: %.4f \n", pba->f_NEDE);
       if (pba->NEDE_fld_nature == NEDE_fld_A)
@@ -2337,10 +2347,28 @@ int background_solve(
       printf("     -> Percolation trigger (H/m): %f \n", pba->Bubble_trigger_H_over_m);
       printf("     -> closure check: H/H0-1: %e \n", pvecback[pba->index_bg_H] / pba->H0 - 1);
 
-      printf("     -> resolution_enhancement: %e \n", ppr->decay_res_enhancement);
+      printf("     -> Decay resolution enhancement: %e \n", ppr->decay_res_enhancement);
       if (pba->has_NEDE_trigger == _TRUE_)
-        printf("     -> Omega_trigger = %g, Trigger_ini = %g \n",
+      {
+        printf("     -> Omega_trigger = %g, Trigger_ini (in Planck units)= %g \n",
                pvecback[pba->index_bg_rho_trigger] / pvecback[pba->index_bg_rho_crit], pba->NEDE_trigger_ini);
+        printf("     -> Trigger contribution to DM: ");
+        if (pba->has_NEDE_trigger_DM)
+        {
+
+          printf("\033[0;32m");
+          printf("yes  \n");
+          printf("\033[0m");
+          printf("     -> Fluid approximation for trigger turned on at (H/m): %f \n", pba->Trigger_fluid_H_over_m);
+          printf("     -> (bg integration step)*(trigger frequency) < %f \n", ppr->trigger_resolution);
+        }
+        else
+        {
+          printf("\033[0;32m");
+          printf("no \n");
+          printf("\033[0m");
+        }
+      }
     }
 
     if (pba->has_scf == _TRUE_)
@@ -2534,7 +2562,7 @@ int background_initial_conditions(
     // printf("initial value: %e; \n",pvecback_integration[pba->index_bi_phi_prime_scf]);
     if (pba->has_NEDE_trigger_DM == _TRUE_)
     {
-      pvecback_integration[pba->index_bi_rho_avg_trigger] = 0.0;
+      pvecback_integration[pba->index_bi_rho_a_cubed_trigger_avg] = 0.0;
     }
   }
 
@@ -2949,11 +2977,11 @@ int background_derivs(
       if ((pba->trigger_fluid_flag_0 == _TRUE_) && (pba->trigger_fluid_flag == _FALSE_))
       {
         // Here we claculate the cycle avergage of the scalar field energy density times a^3.
-        dy[pba->index_bi_rho_avg_trigger] = pow(a, 3) * ((pow(y[pba->index_bi_phi_prime_trigger], 2) / (2 * pow(y[pba->index_bi_a], 2)) + V_trigger(pba, y[pba->index_bi_phi_trigger])) / 3.);
+        dy[pba->index_bi_rho_a_cubed_trigger_avg] = pow(a, 3) * ((pow(y[pba->index_bi_phi_prime_trigger], 2) / (2 * pow(y[pba->index_bi_a], 2)) + V_trigger(pba, y[pba->index_bi_phi_trigger])) / 3.);
         // printf("rho: %f \n", ((pow(y[pba->index_bi_phi_prime_trigger], 2) / (2 * pow(y[pba->index_bi_a], 2)) + V_trigger(pba, y[pba->index_bi_phi_trigger])) / 3.));
       }
       else
-        dy[pba->index_bi_rho_avg_trigger] = 0.0;
+        dy[pba->index_bi_rho_a_cubed_trigger_avg] = 0.0;
     }
   }
 

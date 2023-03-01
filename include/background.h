@@ -364,7 +364,7 @@ struct background
 
     int index_bi_phi_trigger;       /**< {B} scalar field value */
     int index_bi_phi_prime_trigger; /**< {B} scalar field derivative wrt conformal time */
-    int index_bi_rho_avg_trigger; 
+    int index_bi_rho_a_cubed_trigger_avg; 
 
     int index_bi_time;    /**< {C} proper (cosmological) time in Mpc */
     int index_bi_rs;      /**< {C} sound horizon */
