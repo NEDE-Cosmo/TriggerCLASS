@@ -411,6 +411,7 @@ int input_init(
 
       /* Store xzero */
       sprintf(fzw.fc.value[fzw.unknown_parameters_index[0]], "%e", xzero);
+
       if (input_verbose > 0)
       {
         fprintf(stdout, " -> found '%s = %s'\n",
@@ -1425,8 +1426,8 @@ int input_read_parameters(
   {
     class_test(pba->z_decay == 0, errmsg,
                "In input file, z_decay_NEDE  needs to be specified for NEDE (The trigger mass as input parameter has been retired in v5).");
-    
-    class_test((pba->z_decay < 500) && (pba->z_decay > 0) , errmsg,
+
+    class_test((pba->z_decay < 500) && (pba->z_decay > 0), errmsg,
                "z_decay should be larger than 500. For a later decay the code has not been tested. Proceed with extreme care.");
 
     if (pba->Omega_NEDE == 0)
@@ -1455,6 +1456,9 @@ int input_read_parameters(
 
     class_test(pba->f_NEDE > 0.4, errmsg,
                "Choose a smaller amount of NEDE as the code has not been tested for f_NEDE > 0.4.");
+
+    class_test(pba->NEDE_trigger_mass < 0, errmsg,
+               "Trigger mass is negative. This is probably the result of a bad shooting guess. Try to improve the shooting routine.");
 
     if (pba->NEDE_fld_nature == NEDE_fld_A)
       pba->Omega0_NEDE = pba->Omega_NEDE * pow(1. / (1. + pba->z_decay), (3. + pba->three_eos_NEDE));
@@ -4568,29 +4572,30 @@ int input_get_guess(double *xguess,
       break;
 
     case z_decay_NEDE: // Guess for NEDE shooting.
-      Omega_M = ba.Omega0_cdm + ba.Omega0_idm_dr + Omega0_dcdmdr + ba.Omega0_b+ba.Omega0_ncdm_tot;
+      Omega_M = ba.Omega0_cdm + ba.Omega0_idm_dr + Omega0_dcdmdr + ba.Omega0_b + ba.Omega0_ncdm_tot;
       z_NEDE = pfzw->target_value[index_guess];
-      trigger_mass = ba.H0 / ba.Bubble_trigger_H_over_m * pow(1. / (1. - ba.f_NEDE), 0.5) * pow(Omega_M * pow((1. + z_NEDE), 3) + Omega_M * pow((1. + z_NEDE), 4) / (3001.) + (1. - Omega_M), 0.5);
+      trigger_mass = 0.5 * ba.H0 / ba.Bubble_trigger_H_over_m * pow(1. / (1. - ba.f_NEDE), 0.5) * pow(Omega_M * pow((1. + z_NEDE), 3) + Omega_M * pow((1. + z_NEDE), 4) / (3001.) + (1. - Omega_M), 0.5);
 
       // trigger_mass = pow(pfzw->target_value[index_guess], 2.) / pow(ba.Bubble_trigger_H_over_m * 1250., 2.);
 
       xguess[index_guess] = trigger_mass;
       // dxdy[index_guess] = 2 * pfzw->target_value[index_guess] / pow(ba.Bubble_trigger_H_over_m * 1250., 2.);
-      dxdy[index_guess] = 0.5 * trigger_mass * (3. * Omega_M * pow((1. + z_NEDE), 2) + 4. * Omega_M * pow((1. + z_NEDE), 3) / (3001.) )/(Omega_M * pow((1. + z_NEDE), 3) + Omega_M * pow((1. + z_NEDE), 4) / (3001.) + (1. - Omega_M));
-      printf("xguess = %g,dxdy=%g \n", xguess[index_guess], dxdy[index_guess]);
-      printf("val: %f \n", z_NEDE);
+      dxdy[index_guess] = 0.5 * trigger_mass * (3. * Omega_M * pow((1. + z_NEDE), 2) + 4. * Omega_M * pow((1. + z_NEDE), 3) / (3001.)) / (Omega_M * pow((1. + z_NEDE), 3) + Omega_M * pow((1. + z_NEDE), 4) / (3001.) + (1. - Omega_M));
+      // printf("xguess = %g,dxdy=%g \n", xguess[index_guess], dxdy[index_guess]);
+      // printf("val: %f \n", z_NEDE);
       break;
 
     case Omega0_NEDE_trigger_DM: // Guess for NEDE shooting.
       z_NEDE = ba.z_decay;
-      
-      Omega_M = ba.Omega0_cdm + ba.Omega0_idm_dr + Omega0_dcdmdr + ba.Omega0_b+ba.Omega0_ncdm_tot;;
-      trigger_mass = ba.H0 / ba.Bubble_trigger_H_over_m * pow(1. / (1. - ba.f_NEDE), 0.5) * pow(Omega_M * pow((1. + z_NEDE), 3) + Omega_M * pow((1. + z_NEDE), 4) / (3001.) + (1. - Omega_M), 0.5);
-      //trigger_mass = pow(decay_redshift, 2.) / pow(ba.Bubble_trigger_H_over_m * 1200., 2.);
-      xguess[index_guess] = pow(50. * ba.H0 * ba.H0 * pfzw->target_value[index_guess] * pow(z_NEDE, 3) / pow(trigger_mass, 2), 0.5);
+
+      Omega_M = ba.Omega0_cdm + ba.Omega0_idm_dr + Omega0_dcdmdr + ba.Omega0_b + ba.Omega0_ncdm_tot;
+      ;
+      trigger_mass = 0.5 * ba.H0 / ba.Bubble_trigger_H_over_m * pow(1. / (1. - ba.f_NEDE), 0.5) * pow(Omega_M * pow((1. + z_NEDE), 3) + Omega_M * pow((1. + z_NEDE), 4) / (3001.) + (1. - Omega_M), 0.5);
+      // trigger_mass = pow(decay_redshift, 2.) / pow(ba.Bubble_trigger_H_over_m * 1200., 2.);
+      xguess[index_guess] = pow(75. * ba.H0 * ba.H0 * pfzw->target_value[index_guess] * pow(z_NEDE, 3) / pow(trigger_mass, 2), 0.5);
       dxdy[index_guess] = 0.5 * xguess[index_guess] / pfzw->target_value[index_guess];
       // dxdy[index_guess] = dxdy[index_guess] * pfzw->target_value[index_guess];
-       printf("xguess = %g,dxdy=%g, z_decay = %g \n", xguess[index_guess], dxdy[index_guess], decay_redshift);
+      // printf("xguess = %g,dxdy=%g, z_decay = %g \n", xguess[index_guess], dxdy[index_guess], decay_redshift);
       break;
     }
     // printf("xguess = %g\n",xguess[index_guess]);
@@ -4645,7 +4650,7 @@ int input_find_root(double *xzero,
     {
       return_function = input_fzerofun_1d(x2, pfzw, &f2, errmsg);
       (*fevals)++;
-      // printf("x2= %g, f2= %g\n",x2,f2);
+      printf("x2= %g, f2= %g\n", x2, f2);
       // fprintf(stderr,"iter2=%d\n",iter2);
 
       if (return_function == _SUCCESS_)
@@ -4667,7 +4672,7 @@ int input_find_root(double *xzero,
     if (f1 * f2 < 0.0)
     {
       /** - root has been bracketed */
-      if (0 == 1)
+      if (1 == 1)
       {
         printf("Root has been bracketed after %d iterations: [%g, %g].\n", iter, x1, x2);
       }

@@ -1674,6 +1674,8 @@ cdef class Class:
                 value = self.ba.z_decay
             elif name == 'NEDE_trigger_mass':
                 value = self.ba.NEDE_trigger_mass
+            elif name == 'NEDE_trigger_ini':
+                value = self.ba.NEDE_trigger_ini
             elif name == 'Omega0_fld':
                 value = self.ba.Omega0_fld
             elif name == 'age':
