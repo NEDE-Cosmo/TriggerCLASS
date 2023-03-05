@@ -1676,6 +1676,8 @@ cdef class Class:
                 value = self.ba.NEDE_trigger_mass
             elif name == 'NEDE_trigger_ini':
                 value = self.ba.NEDE_trigger_ini
+            elif name == 'S8':
+                value = self.nl.sigma8[self.nl.index_pk_m]*(self.ba.Omega0_m/0.3)**0.5
             elif name == 'Omega0_fld':
                 value = self.ba.Omega0_fld
             elif name == 'age':
