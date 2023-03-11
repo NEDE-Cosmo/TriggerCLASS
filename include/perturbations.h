@@ -749,7 +749,7 @@ struct perturb_workspace
   int index_ap_CCa;        /**< index for New EDE approximation*/
   int index_ap_sda;        /**< index for New EDE approximation*/
   int index_ap_tfa;        /**< index for New EDE approximation*/
-  int index_ap_tavg;        /**< index for New EDE approximation*/
+  int index_ap_tavg;       /**< index for New EDE approximation*/
 
   int ap_size; /**< number of relevant approximations for a given mode */
 
@@ -1017,6 +1017,13 @@ extern "C"
       double a_prime_over_a,
       double *pvecthermo,
       struct perturb_workspace *ppw);
+
+  int trigger_NEDE_cs2(
+      struct background *pba,
+      double a,
+      double k,
+      double H,
+      double *cs2);
 
 #ifdef __cplusplus
 }

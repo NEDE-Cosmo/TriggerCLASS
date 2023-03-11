@@ -409,7 +409,7 @@ int background_functions(
       pvecback[pba->index_bg_dV_trigger] = dV_trigger(pba, phi);   // dV_scf(pba,phi); //potential' as function of phi
       pvecback[pba->index_bg_ddV_trigger] = ddV_trigger(pba, phi); // ddV_scf(pba,phi); //potential'' as function of phi
 
-      pvecback[pba->index_bg_rho_trigger] = pba->rho_avg_trigger_fld * pow(pba->a_trigger_fluid / a_rel, 3);
+      pvecback[pba->index_bg_rho_trigger] = pba->rho_trigger_fluid * pow(pba->a_trigger_fluid / a_rel, 3);
       pvecback[pba->index_bg_p_trigger] = 0.; // pressure of the trigger field
       rho_tot += pvecback[pba->index_bg_rho_trigger];
       p_tot += pvecback[pba->index_bg_p_trigger];
@@ -799,7 +799,7 @@ int background_init(
   if (pba->background_verbose > 0)
   {
     printf("Running CLASS version %s\n", _VERSION_);
-    printf("Running TriggerCLASS version v6.0 \n");
+    printf("Running TriggerCLASS version v6.1 \n");
     printf("Computing background\n");
 
     /* below we want to inform the user about ncdm species and/or the total N_eff */
@@ -1930,6 +1930,8 @@ int background_solve(
   double d;
   double w_NEDE, ca2_NEDE;
   double H_start_averaging;
+  double phi_fluid, phi_prime_fluid, phi_c, phi_s, phi_c_p, phi_s_p, rho_tfa, factor;
+
   // short trigger_fluid_flag_local;
 
   bpaw.pba = pba;
@@ -2082,8 +2084,30 @@ int background_solve(
           pba->z_trigger_fluid = 1. / a - 1.;
           pba->t_trigger_fluid = pvecback_integration[pba->index_bi_time];
           pba->tau_trigger_fluid = tau_start;
-          pba->rho_trigger_fluid = pvecback[pba->index_bg_rho_trigger];
+          // pba->rho_trigger_fluid = pvecback[pba->index_bg_rho_trigger];
           pba->rho_avg_trigger_fld = pvecback_integration[pba->index_bi_rho_a_cubed_trigger_avg] / pow(a, 3) / (tau_start - pba->tau_trigger_average_start);
+
+          phi_fluid = pvecback_integration[pba->index_bi_phi_trigger];
+          phi_prime_fluid = pvecback_integration[pba->index_bi_phi_prime_trigger];
+
+          factor = 6.0 * pow(pvecback[pba->index_bg_H], 2) / (9.0 * pow(pvecback[pba->index_bg_H], 4) - 4 * (4 * pow(pvecback[pba->index_bg_H], 2) * pow(pba->NEDE_trigger_mass, 2) + pow(pvecback[pba->index_bg_H_prime], 2) / pow(a, 2)));
+
+          phi_c_p = factor * (4 * pvecback[pba->index_bg_H] * pba->NEDE_trigger_mass * phi_fluid + 3.0 * pow(pvecback[pba->index_bg_H], 2) * phi_prime_fluid / a / pba->NEDE_trigger_mass + 2.0 * pvecback[pba->index_bg_H_prime] * phi_prime_fluid / pow(a, 2) / pba->NEDE_trigger_mass);
+
+          phi_s_p = factor * (3 * pow(pvecback[pba->index_bg_H], 2) * phi_fluid - 2.0 * pvecback[pba->index_bg_H_prime] / a * phi_fluid + 4.0 * pvecback[pba->index_bg_H] * phi_prime_fluid / a);
+
+          phi_c = phi_fluid;
+
+          phi_s = phi_prime_fluid / a / pba->NEDE_trigger_mass - phi_c_p;
+
+          rho_tfa = 0.5 * pow(pba->NEDE_trigger_mass, 2) * (phi_c * phi_c + phi_s * phi_s + 0.5 * (phi_c_p * phi_c_p + phi_s_p * phi_s_p) - phi_c * phi_s_p + phi_s * phi_c_p);
+          rho_tfa = rho_tfa / 3.0; // CLASS convention!
+          pba->rho_trigger_fluid = rho_tfa;
+
+          //printf("H: %e, a: %e, H_prime: %e ,factor: %e ,phi_fluid: %e \n",pvecback[pba->index_bg_H],a,pvecback[pba->index_bg_H_prime], factor,phi_fluid);
+
+          // printf("rho_tfa: %f, %f, %f \n",pba->rho_trigger_fluid,pba->rho_avg_trigger_fld, rho_tfa);
+
           if (pba->background_verbose > 3)
           {
             printf("NEDE trigger described in terms of cycle-averaged effective fluid at z = %f, tau = %f and H/m = %f; cycle length (in units of 2Pi/m): %f \n", 1. / a - 1., tau_start, pvecback[pba->index_bg_H] / pba->NEDE_trigger_mass, (pvecback_integration[pba->index_bi_time] - pba->t_trigger_average_start) / 2. / _PI_ * pba->NEDE_trigger_mass);
