@@ -125,7 +125,6 @@ struct background
     double a_decay;
     double z_decay;
 
-
     double a_trigger_fluid;
     double a_trigger_average_start;
     double tau_trigger_average_start;
@@ -135,6 +134,8 @@ struct background
     double z_trigger_fluid;
     double rho_trigger_fluid;
     double rho_avg_trigger_fld;
+    double H_fluid;
+    double H_prime_fluid;
 
     /* NEDE fluid nature*/
     int NEDE_fld_nature;
@@ -274,6 +275,7 @@ struct background
 
     int index_bg_rho_NEDE; /**< New EDE density */
     int index_bg_w_NEDE;   /**< NEDE eos parameter */
+    int index_bg_w_trigger_fld; 
 
     int index_bg_phi_scf;       /**< scalar field value */
     int index_bg_phi_prime_scf; /**< scalar field derivative wrt conformal time */
@@ -364,7 +366,7 @@ struct background
 
     int index_bi_phi_trigger;       /**< {B} scalar field value */
     int index_bi_phi_prime_trigger; /**< {B} scalar field derivative wrt conformal time */
-    int index_bi_rho_a_cubed_trigger_avg; 
+    int index_bi_rho_trigger_fld;
 
     int index_bi_time;    /**< {C} proper (cosmological) time in Mpc */
     int index_bi_rs;      /**< {C} sound horizon */
@@ -534,6 +536,16 @@ extern "C"
         double a_prime_over_a,
         double *rho,
         double *p,
+        double *w,
+        double *dw_over_da,
+        double *ca2);
+
+    int background_quantities_NEDE_trigger(
+        struct background *pba,
+        double a,
+        double a_prime_over_a,
+        double H,
+        double H_prime,
         double *w,
         double *dw_over_da,
         double *ca2);
