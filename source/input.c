@@ -1450,8 +1450,8 @@ int input_read_parameters(
       class_test(pba->Trigger_fluid_H_over_m > pba->Bubble_trigger_H_over_m, errmsg,
                  "The trigger fluid approximation cannot be applied before the transition. Reduce therefore 'NEDE_trigger_fluid_H_m'.");
 
-      class_test(pba->Trigger_fluid_H_over_m > 0.05, errmsg,
-                 "The trigger fluid approximation can only be applied when trigger oscillations are fast on cosmological time scale. Reduce therefore 'NEDE_trigger_fluid_H_m' below 0.05.");
+      class_test(pba->Trigger_fluid_H_over_m > 0.1, errmsg,
+                 "The trigger fluid approximation can only be applied when trigger oscillations are fast on cosmological time scale. Reduce therefore 'NEDE_trigger_fluid_H_m' below 0.1.");
     }
 
     class_test(pba->f_NEDE > 0.4, errmsg,

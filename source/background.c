@@ -2170,7 +2170,7 @@ int background_solve(
 
           pvecback_integration[pba->index_bi_rho_trigger_fld] = rho_tfa;
 
-           printf("H: %e, a: %e, H_prime: %e ,factor: %e ,phi_fluid: %e \n",pvecback[pba->index_bg_H],a,pvecback[pba->index_bg_H_prime], factor,phi_fluid);
+           //printf("H: %e, a: %e, H_prime: %e ,factor: %e ,phi_fluid: %e \n",pvecback[pba->index_bg_H],a,pvecback[pba->index_bg_H_prime], factor,phi_fluid);
 
           // printf("rho_tfa: %f, %f, %f \n",pba->rho_trigger_fluid,pba->rho_avg_trigger_fld, rho_tfa);
 
