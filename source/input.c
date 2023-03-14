@@ -480,6 +480,35 @@ int input_init(
         }
       }
 
+      fzw.unknown_param_NEDE[0] = x_inout[0];
+      fzw.unknown_param_NEDE[1] = x_inout[1];
+
+      for (counter = 0; counter < unknown_parameters_size; counter++)
+      {
+        fzw.counter = counter;
+        // printf("counter: %d, xinout1 %f, xinout2 %f, size: %d ", counter, x_inout[0], x_inout[1], unknown_parameters_size);
+        class_call_try(input_find_root_NEDE(x_inout,
+                                            dxdF,
+                                            counter,
+                                            &fevals,
+                                            &fzw,
+                                            ppr->tol_shooting_1d,
+                                            errmsg),
+                       errmsg,
+                       pba->shooting_error,
+                       shooting_failed = _TRUE_);
+        fzw.unknown_param_NEDE[i] = x_inout[i];
+        sprintf(fzw.fc.value[fzw.unknown_parameters_index[counter]],
+                "%e", x_inout[counter]);
+        if (input_verbose > 0)
+        {
+          fprintf(stdout, " -> found '%s = %s'\n",
+                  fzw.fc.name[fzw.unknown_parameters_index[counter]],
+                  fzw.fc.value[fzw.unknown_parameters_index[counter]]);
+        }
+      }
+      
+
       free(x_inout);
       free(dxdF);
     }
@@ -1387,7 +1416,7 @@ int input_read_parameters(
   class_read_double("Omega0_NEDE_trigger_DM", pba->Omega0_trigger);
   class_read_double("NEDE_trigger_fluid_H_m", pba->Trigger_fluid_H_over_m);
 
-  /* NEDE: Here we decide whether NEDE decays according to scenario A or B. Default: Scneario A*/
+  /* NEDE: Here we decide whether NEDE decays according to scenario A or B. Default: Scenario A*/
 
   class_call(parser_read_string(pfc, "NEDE_fld_nature", &string_NEDE, &flag_NEDE_4, errmsg),
              errmsg,
