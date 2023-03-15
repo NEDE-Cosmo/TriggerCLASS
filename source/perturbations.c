@@ -3875,7 +3875,7 @@ int perturb_vector_init(
   double delta_p_trigger, rho_plus_p_theta_trigger_fld;
   double w_trigger, cs2_trigger, ca2_trigger, a2, k2;
   double delta_avg, delta_tau_avg, theta_avg, theta_tau_avg;
-  double hL_prime,rho_tfa,p_tfa, phi_fluid, phi_prime_fluid, delta_phi_fluid, delta_phi_prime_fluid, H, H_prime, m, fac, phi_c_p, phi_s_p, phi_c, phi_s, delta_phi_c_p, delta_phi_s_p, delta_phi_c, delta_phi_s;
+  double hL_prime, rho_tfa, p_tfa, phi_fluid, phi_prime_fluid, delta_phi_fluid, delta_phi_prime_fluid, H, H_prime, m, fac, phi_c_p, phi_s_p, phi_c, phi_s, delta_phi_c_p, delta_phi_s_p, delta_phi_c, delta_phi_s;
 
   /** - allocate a new perturb_vector structure to which ppw-->pv will point at the end of the routine */
 
@@ -5955,46 +5955,27 @@ int perturb_vector_init(
               // New EDE: Here we do the matching for he NEDE trigger field perturbations when the fluid approximation starts.
               a = ppw->pvecback[pba->index_bg_a];
               a_prime_over_a = ppw->pvecback[pba->index_bg_H] * a;
-              
+
               a2 = a * a;
               k2 = k * k;
 
-              //class_call(trigger_NEDE_cs2(pba, a, k, ppw->pvecback[pba->index_bg_H], &cs2_trigger),
-              //           pba->error_message,
-                //         pba->error_message);
-
-              // printf("cs2 Hu: %f, k: %f \n",cs2_trigger, k);
-              // cs2_trigger = k2 / (4 * pow(pba->NEDE_trigger_mass, 2) * a2 + k2);
-              //     printf("cs2: %f, k: %f \n",cs2_trigger, k);
-
-              // delta_rho_trigger = 1. / 3. *
-              //(1. / (a * a) * ppw->pvecback[pba->index_bg_phi_prime_trigger] * ppw->pv->y[ppw->pv->index_pt_phi_prime_trigger] + ppw->pvecback[pba->index_bg_dV_trigger] * ppw->pv->y[ppw->pv->index_pt_phi_trigger]);
-              /*delta_p_trigger = 1. / 3. *
-                                (1. / (a * a) * ppw->pvecback[pba->index_bg_phi_prime_trigger] * ppw->pv->y[ppw->pv->index_pt_phi_prime_trigger] - ppw->pvecback[pba->index_bg_dV_trigger] * ppw->pv->y[ppw->pv->index_pt_phi_trigger]);*/
-
-              // rho_plus_p_theta_trigger_fld = 1. / 3. * k2 / a2 * ppw->pvecback[pba->index_bg_phi_prime_trigger] * ppw->pv->y[ppw->pv->index_pt_phi_trigger];
-
               // printf("k: %f, ma: %f , naive delta-rho: %e, average: %e,m cs: %e, x: %e \n", k, pba->NEDE_trigger_mass * a, delta_rho_trigger, ppw->pv->y[ppw->pv->index_pt_delta_trigger_cycle_integral] / ppw->pv->y[ppw->pv->index_pt_theta_hat_t_trigger_cycle_integral], cs2_trigger, ppw->pv->y[ppw->pv->index_pt_phi_trigger]);
 
-            
+              // We use the description  proposed in arXiv:2201.10238 //stop2
+
               phi_fluid = ppw->pvecback[pba->index_bg_phi_trigger];
               phi_prime_fluid = ppw->pvecback[pba->index_bg_phi_prime_trigger];
-              
 
-              hL_prime=ppw->pvecmetric[ppw->index_mt_h_prime];
-
-
-              
+              hL_prime = ppw->pvecmetric[ppw->index_mt_h_prime];
 
               delta_phi_fluid = ppw->pv->y[ppw->pv->index_pt_phi_trigger];
               delta_phi_prime_fluid = ppw->pv->y[ppw->pv->index_pt_phi_prime_trigger];
 
-              H = pba->H_fluid; //ppw->pvecback[pba->index_bg_H];
-              H_prime = pba->H_prime_fluid; //ppw->pvecback[pba->index_bg_H_prime];
+              H = pba->H_fluid;             // ppw->pvecback[pba->index_bg_H];
+              H_prime = pba->H_prime_fluid; // ppw->pvecback[pba->index_bg_H_prime];
               m = pba->NEDE_trigger_mass;
 
-
-              //printf("m: %e, H: %e, H_prime %e, hL_prime: %e, a: %e,k: %e, phi_fluid: %e, phi_prime_fluid: %e, delta_phi_fluid: %e, delta_phi_prime_fluid: %e \n",m, H, H_prime,hL_prime,a, k, phi_fluid,phi_prime_fluid,delta_phi_fluid,delta_phi_prime_fluid);
+              // printf("m: %e, H: %e, H_prime %e, hL_prime: %e, a: %e,k: %e, phi_fluid: %e, phi_prime_fluid: %e, delta_phi_fluid: %e, delta_phi_prime_fluid: %e \n",m, H, H_prime,hL_prime,a, k, phi_fluid,phi_prime_fluid,delta_phi_fluid,delta_phi_prime_fluid);
 
               fac = 6.0 * pow(H, 2) / (9.0 * pow(H, 4) - 4 * (4 * pow(H, 2) * pow(m, 2) + pow(H_prime, 2) / pow(a, 2)));
 
@@ -6006,17 +5987,10 @@ int perturb_vector_init(
 
               phi_s = phi_prime_fluid / a / m - phi_c_p;
 
-              //delta_phi_c_p = fac * (4 * H * m * delta_phi_fluid + 3.0 * pow(H, 2) * delta_phi_prime_fluid / a / m + 2.0 * H_prime * delta_phi_prime_fluid / pow(a, 2) / m);
+              delta_phi_c_p = H / (-8.0 * pow(H * k, 2) * m + a * a * m * (9 * pow(H, 4) - 4 * (4 * pow(H * m, 2) + pow(H_prime / a, 2)))) * (2.0 * k * k * (3.0 * H * H * delta_phi_fluid + 2.0 * H_prime / a * delta_phi_fluid - 4.0 * H * delta_phi_prime_fluid / a) + a * a * m * (2.0 * hL_prime / a * H_prime / a * (phi_c_p + phi_s) + 3.0 * H * H * m * (hL_prime / a / m * (phi_c_p + phi_s) + 8.0 * delta_phi_fluid) + 18.0 * pow(H, 3) * delta_phi_prime_fluid / a / m + 4.0 * H * m * (hL_prime / a * (phi_c - phi_s_p) + 3.0 * H_prime / a / m * delta_phi_prime_fluid / a / m)));
 
-              //delta_phi_s_p = fac * (3 * pow(H, 2) * delta_phi_fluid - 2.0 * H_prime / a * delta_phi_fluid + 4.0 * H * delta_phi_prime_fluid / a);
+              delta_phi_s_p = -H / pow(a, 2) / m / (-8.0 * pow(H * k, 2) * m + a * a * m * (9 * pow(H, 4) - 4.0 * (4.0 * pow(H * m, 2) + pow(H_prime / a, 2)))) * (-4.0 * H * pow(k, 4) * delta_phi_fluid - 2.0 * pow(a * k, 2) * m * (H * m * (hL_prime / a / m * (phi_c_p + phi_s) + 4.0 * delta_phi_fluid) + 3.0 * pow(H, 2) * delta_phi_prime_fluid / a / m + 2.0 * H_prime / a * delta_phi_prime_fluid / a / m) - pow(a * a * m, 2) * (2.0 * hL_prime / a * H_prime / a * (-phi_c + phi_s_p) + 18.0 * pow(H, 3) * delta_phi_fluid + 4.0 * H * m * (hL_prime / a * (phi_c_p + phi_s) - 3.0 * H_prime / a / m * delta_phi_fluid) + 3.0 * H * H * m * (hL_prime / a / m * phi_c - hL_prime / a / m * phi_s_p + 8.0 * delta_phi_prime_fluid / a / m)));
 
-              delta_phi_c_p = H / (-8.0 * pow(H * k,2) * m + a * a * m * (9* pow(H,4) - 4* (4* pow(H*m,2) + pow(H_prime/a,2)))) * ( 2.0 * k * k * (3.0* H*H * delta_phi_fluid + 2.0 * H_prime / a * delta_phi_fluid - 4.0 * H * delta_phi_prime_fluid / a  ) + a * a *m *( 2.0 * hL_prime / a * H_prime / a * (phi_c_p + phi_s) + 3.0 * H * H *m *( hL_prime / a / m *(phi_c_p + phi_s) + 8.0 * delta_phi_fluid ) + 18.0 * pow(H,3) *delta_phi_prime_fluid / a / m + 4.0 * H * m * (hL_prime / a  * (phi_c - phi_s_p) + 3.0 * H_prime / a / m * delta_phi_prime_fluid / a / m) ));
-              
-              
-           
-              
-              delta_phi_s_p = - H / pow(a,2) / m / (-8.0 * pow(H * k,2) * m + a * a * m * (9* pow(H,4) - 4.0* (4.0* pow(H*m,2) + pow(H_prime/a,2)))) * (- 4.0 * H * pow(k,4) *delta_phi_fluid -2.0*pow(a*k,2)*m*(H*m*(hL_prime / a /m *(phi_c_p + phi_s) + 4.0*delta_phi_fluid) + 3.0 * pow(H,2)*delta_phi_prime_fluid / a /m + 2.0 * H_prime /a * delta_phi_prime_fluid / a /m) - pow(a*a*m,2) *(2.0 * hL_prime /a * H_prime / a * (-phi_c+phi_s_p) + 18.0 *pow(H,3)*delta_phi_fluid + 4.0*H *m *(hL_prime/a*(phi_c_p+phi_s) - 3.0 * H_prime/a/m*delta_phi_fluid) + 3.0 * H * H *m*(hL_prime/a/m*phi_c -hL_prime/a/m*phi_s_p+8.0* delta_phi_prime_fluid/a/m)));      
-              
               delta_phi_c = delta_phi_fluid;
 
               delta_phi_s = delta_phi_prime_fluid / a / m - delta_phi_c_p;
@@ -6033,16 +6007,13 @@ int perturb_vector_init(
               p_tfa = 0.5 * pow(m, 2) * (phi_c_p * phi_c_p / 2.0 + phi_s_p * phi_s_p / 2.0 - phi_c * phi_s_p + phi_s * phi_c_p);
               p_tfa = p_tfa / 3.0; // CLASS convention!
 
-              //printf("delta_phi_c: %e, delta_phi_s: %e, delta_phi_c_p: %e, delta_phi_s_p: %e, delta_rho_trigger: %e, rho_plus_p_theta_trigger_fld: %e, rho_tfa: %e,p_tfa: %e, phi_c: %e, phi_s: %e, phi_c_p: %e, phi_s_p: %e \n",delta_phi_c,delta_phi_s,delta_phi_c_p,delta_phi_s_p, delta_rho_trigger,rho_plus_p_theta_trigger_fld,rho_tfa,p_tfa,phi_c,phi_s,phi_c_p, phi_s_p);
+              // printf("delta_phi_c: %e, delta_phi_s: %e, delta_phi_c_p: %e, delta_phi_s_p: %e, delta_rho_trigger: %e, rho_plus_p_theta_trigger_fld: %e, rho_tfa: %e,p_tfa: %e, phi_c: %e, phi_s: %e, phi_c_p: %e, phi_s_p: %e \n",delta_phi_c,delta_phi_s,delta_phi_c_p,delta_phi_s_p, delta_rho_trigger,rho_plus_p_theta_trigger_fld,rho_tfa,p_tfa,phi_c,phi_s,phi_c_p, phi_s_p);
 
               ppv->y[ppv->index_pt_delta_trigger_fld] = delta_rho_trigger / rho_tfa;
               ppv->y[ppv->index_pt_theta_trigger_fld] = rho_plus_p_theta_trigger_fld / (rho_tfa + p_tfa);
 
-               //printf("tau: %f, H: %e, a: %e, H_prime: %e ,factor: %e, rho_tfa:%e , p_tfa: %e\n",tau,H,a,H_prime, fac,rho_tfa, p_tfa);
+              // printf("tau: %f, H: %e, a: %e, H_prime: %e ,factor: %e, rho_tfa:%e , p_tfa: %e\n",tau,H,a,H_prime, fac,rho_tfa, p_tfa);
               // printf("delta_rho_old: %e, delta_rho_Hu: %e, Theta: %e, Theta Hu: %e \n",ppv->y[ppv->index_pt_delta_trigger_fld]*ppw->pvecback[pba->index_bg_rho_trigger],delta_rho_trigger,ppw->pv->y[ppw->pv->index_pt_theta_hat_trigger_cycle_integral] / (pba->tau_trigger_fluid - pba->tau_trigger_average_start)*ppw->pvecback[pba->index_bg_rho_trigger],rho_plus_p_theta_trigger_fld);
-
-              // rho_tfa = 0.5 * pow(pba->NEDE_trigger_mass, 2) * (phi_c * phi_c + phi_s * phi_s + 0.5 * (phi_c_p * phi_c_p + phi_s_p * phi_s_p) - phi_c * phi_s_p + phi_s * phi_c_p);
-              // rho_tfa = rho_tfa / 3.0; // CLASS convention!
             }
 
             if (pba->has_idr == _TRUE_)
@@ -7272,6 +7243,7 @@ int perturb_approximations(
         ppw->approx[ppw->index_ap_sda] = (int)sda_off;
       }
 
+      /*New EDE: Here we define the switch for the trigger fluid approximation*/ // stop3
       if (pba->has_NEDE_trigger)
       {
         if ((ppw->pvecback[pba->index_bg_a] <= pba->a_trigger_fluid) || (pba->has_NEDE_trigger_DM == _FALSE_))
@@ -8316,7 +8288,7 @@ int perturb_total_stress_energy(
       {
         if ((ppw->approx[ppw->index_ap_CCa] == (int)CCa_on) || ((pba->has_NEDE_trigger_DM == _TRUE_) && (ppw->approx[ppw->index_ap_tfa] == (int)tfa_off)))
         {
-
+          // This is the case when the scalar field is tracked.
           if (ppt->gauge == synchronous)
           {
 
@@ -8347,6 +8319,7 @@ int perturb_total_stress_energy(
         }
         else if ((pba->has_NEDE_trigger_DM == _TRUE_) && (ppw->approx[ppw->index_ap_tfa] == (int)tfa_on))
         {
+          // This is the case when the fluid approximation is used..
 
           class_call(trigger_NEDE_cs2(pba, a, k, ppw->pvecback[pba->index_bg_H], &cs2_trigger),
                      pba->error_message,
@@ -8355,10 +8328,6 @@ int perturb_total_stress_energy(
           class_call(background_quantities_NEDE_trigger(pba, a, a_prime_over_a, ppw->pvecback[pba->index_bg_H], ppw->pvecback[pba->index_bg_H_prime], &w_trigger, NULL, &ca2_trigger),
                      pba->error_message,
                      pba->error_message);
-
-          // cs2_trigger = k2 / (4 * pow(pba->NEDE_trigger_mass, 2) * a2 + k2);
-          // ca2_trigger = 0;
-          // w_trigger = 0;
 
           delta_trigger = y[ppw->pv->index_pt_delta_trigger_fld];
           theta_trigger = y[ppw->pv->index_pt_theta_trigger_fld];
@@ -8371,6 +8340,17 @@ int perturb_total_stress_energy(
           ppw->delta_p += cs2_trigger * ppw->pvecback[pba->index_bg_rho_trigger] * delta_trigger + (cs2_trigger - ca2_trigger) * (3. * a_prime_over_a * ((1. + w_trigger) * ppw->pvecback[pba->index_bg_rho_trigger] * theta_trigger) / k / k);
 
           ppw->rho_plus_p_tot += (1. + w_trigger) * ppw->pvecback[pba->index_bg_rho_trigger];
+
+          if (ppt->has_source_delta_m == _TRUE_)
+          {
+            delta_rho_m += ppw->pvecback[pba->index_bg_rho_trigger] * delta_trigger; // contribution to delta rho_matter
+            rho_m += ppw->pvecback[pba->index_bg_rho_trigger];
+          }
+          if ((ppt->has_source_delta_m == _TRUE_) || (ppt->has_source_theta_m == _TRUE_))
+          {
+            rho_plus_p_theta_m += (1. + w_trigger) * ppw->pvecback[pba->index_bg_rho_trigger] * theta_trigger; // contribution to [(rho+p)theta]_matter
+            rho_plus_p_m += (1. + w_trigger) * ppw->pvecback[pba->index_bg_rho_trigger];
+          }
         }
       }
     }
@@ -10862,7 +10842,7 @@ int perturb_derivs(double tau,
       }
     }
 
-    /* New EDE */
+    /* New EDE */ // stop1
     /*These are the actual perturbation equations. See for example arXiv: 1806.10.608v1 and also Hu in the presence of shear, arXiv: astro-ph/9801234v2*/
 
     if (pba->has_NEDE_pert == _TRUE_)
@@ -10923,22 +10903,22 @@ int perturb_derivs(double tau,
         else if ((pba->has_NEDE_trigger_DM == _TRUE_) && (ppw->approx[ppw->index_ap_tfa] == (int)tfa_on))
         {
 
+          // Get the sound speed.
           class_call(trigger_NEDE_cs2(pba, a, k, ppw->pvecback[pba->index_bg_H], &cs2_trigger),
                      pba->error_message,
                      pba->error_message);
 
+          // Get other background quantities.
           class_call(background_quantities_NEDE_trigger(pba, a, a_prime_over_a, ppw->pvecback[pba->index_bg_H], ppw->pvecback[pba->index_bg_H_prime], &w_trigger, NULL, &ca2_trigger),
                      pba->error_message,
                      pba->error_message);
-          //w_trigger = 0.;
-          // cs2_trigger = k2 / (4 * pow(pba->NEDE_trigger_mass, 2) * a2 + k2);
-          //ca2_trigger = 0.;
+
+          // These are the standard equations for generic fluid perturbations.
 
           dy[pv->index_pt_delta_trigger_fld] = -(1. + w_trigger) * (y[pv->index_pt_theta_trigger_fld] + metric_continuity) - 3. * (cs2_trigger - w_trigger) * a_prime_over_a * y[pv->index_pt_delta_trigger_fld] - 9. * (1 + w_trigger) * (cs2_trigger - ca2_trigger) * a_prime_over_a * a_prime_over_a * y[pv->index_pt_theta_trigger_fld] / k2;
-          // metric_continuity = h'/2;
+
           dy[pv->index_pt_theta_trigger_fld] =
               k2 * (3. * cs2_trigger * y[pv->index_pt_delta_trigger_fld] / (3. + 3. * w_trigger)) + metric_euler - (1. - 3. * cs2_trigger) * a_prime_over_a * y[pv->index_pt_theta_trigger_fld];
-          // metric_euler=0 in synchronous gauge and s2_squared = 1 without spatial curvature. //Shear term vanishes in standard NEDE scenario.
         }
       }
     }

@@ -422,6 +422,7 @@ int input_init(
     else
     {
       /* We need to do multidimensional root finding */
+      /*New EDE: Instead of a multi-dim shooting, we do two sequential shootings, which is good enough but more stable.*/ // stop1
 
       if (input_verbose > 0)
       {
@@ -480,34 +481,39 @@ int input_init(
         }
       }
 
-      fzw.unknown_param_NEDE[0] = x_inout[0];
-      fzw.unknown_param_NEDE[1] = x_inout[1];
+      /*New EDE: the second shooting is only necessary if the amount of Omega_trigger is sizeable. In that case we need to readjust the shooting for m.*/
+      // printf("val: %f",fzw.target_value[1]);
 
-      for (counter = 0; counter < unknown_parameters_size; counter++)
+      if (fzw.target_value[1] > 0.001)
       {
-        fzw.counter = counter;
-        // printf("counter: %d, xinout1 %f, xinout2 %f, size: %d ", counter, x_inout[0], x_inout[1], unknown_parameters_size);
-        class_call_try(input_find_root_NEDE(x_inout,
-                                            dxdF,
-                                            counter,
-                                            &fevals,
-                                            &fzw,
-                                            ppr->tol_shooting_1d,
-                                            errmsg),
-                       errmsg,
-                       pba->shooting_error,
-                       shooting_failed = _TRUE_);
-        fzw.unknown_param_NEDE[i] = x_inout[i];
-        sprintf(fzw.fc.value[fzw.unknown_parameters_index[counter]],
-                "%e", x_inout[counter]);
-        if (input_verbose > 0)
+        fzw.unknown_param_NEDE[0] = x_inout[0];
+        fzw.unknown_param_NEDE[1] = x_inout[1];
+
+        for (counter = 0; counter < unknown_parameters_size; counter++)
         {
-          fprintf(stdout, " -> found '%s = %s'\n",
-                  fzw.fc.name[fzw.unknown_parameters_index[counter]],
-                  fzw.fc.value[fzw.unknown_parameters_index[counter]]);
+          fzw.counter = counter;
+          // printf("counter: %d, xinout1 %f, xinout2 %f, size: %d ", counter, x_inout[0], x_inout[1], unknown_parameters_size);
+          class_call_try(input_find_root_NEDE(x_inout,
+                                              dxdF,
+                                              counter,
+                                              &fevals,
+                                              &fzw,
+                                              ppr->tol_shooting_1d,
+                                              errmsg),
+                         errmsg,
+                         pba->shooting_error,
+                         shooting_failed = _TRUE_);
+          fzw.unknown_param_NEDE[i] = x_inout[i];
+          sprintf(fzw.fc.value[fzw.unknown_parameters_index[counter]],
+                  "%e", x_inout[counter]);
+          if (input_verbose > 0)
+          {
+            fprintf(stdout, " -> found '%s = %s'\n",
+                    fzw.fc.name[fzw.unknown_parameters_index[counter]],
+                    fzw.fc.value[fzw.unknown_parameters_index[counter]]);
+          }
         }
       }
-      
 
       free(x_inout);
       free(dxdF);
@@ -4610,7 +4616,7 @@ int input_get_guess(double *xguess,
       xguess[index_guess] = trigger_mass;
       // dxdy[index_guess] = 2 * pfzw->target_value[index_guess] / pow(ba.Bubble_trigger_H_over_m * 1250., 2.);
       dxdy[index_guess] = 0.5 * trigger_mass * (3. * Omega_M * pow((1. + z_NEDE), 2) + 4. * Omega_M * pow((1. + z_NEDE), 3) / (3001.)) / (Omega_M * pow((1. + z_NEDE), 3) + Omega_M * pow((1. + z_NEDE), 4) / (3001.) + (1. - Omega_M));
-      // printf("xguess = %g,dxdy=%g \n", xguess[index_guess], dxdy[index_guess]);
+      //printf("xguess = %g,dxdy=%g \n", xguess[index_guess], dxdy[index_guess]);
       // printf("val: %f \n", z_NEDE);
       break;
 
@@ -4618,13 +4624,12 @@ int input_get_guess(double *xguess,
       z_NEDE = ba.z_decay;
 
       Omega_M = ba.Omega0_cdm + ba.Omega0_idm_dr + Omega0_dcdmdr + ba.Omega0_b + ba.Omega0_ncdm_tot;
-      ;
       trigger_mass = 0.5 * ba.H0 / ba.Bubble_trigger_H_over_m * pow(1. / (1. - ba.f_NEDE), 0.5) * pow(Omega_M * pow((1. + z_NEDE), 3) + Omega_M * pow((1. + z_NEDE), 4) / (3001.) + (1. - Omega_M), 0.5);
       // trigger_mass = pow(decay_redshift, 2.) / pow(ba.Bubble_trigger_H_over_m * 1200., 2.);
       xguess[index_guess] = pow(75. * ba.H0 * ba.H0 * pfzw->target_value[index_guess] * pow(z_NEDE, 3) / pow(trigger_mass, 2), 0.5);
       dxdy[index_guess] = 0.5 * xguess[index_guess] / pfzw->target_value[index_guess];
       // dxdy[index_guess] = dxdy[index_guess] * pfzw->target_value[index_guess];
-      // printf("xguess = %g,dxdy=%g, z_decay = %g \n", xguess[index_guess], dxdy[index_guess], decay_redshift);
+      //printf("xguess = %g,dxdy=%g, z_decay = %g \n", xguess[index_guess], dxdy[index_guess], decay_redshift);
       break;
     }
     // printf("xguess = %g\n",xguess[index_guess]);
