@@ -2165,7 +2165,7 @@ int nonlinear_pk_linear(
         For isocurvature or cross adiabatic-isocurvature parts,
         one would just replace one or two 'R' by 'S_i's */
 
-    /** --> get contributions to P(k) diagonal in the initial conditions */
+    /** --> get contributions to P(k) diagonal in the initial conditions */ //stop1 Here the power spectrum is inferred.
     for (index_ic1 = 0; index_ic1 < pnl->ic_size; index_ic1++) {
 
       index_ic1_ic1 = index_symmetric_matrix(index_ic1,index_ic1,pnl->ic_size);

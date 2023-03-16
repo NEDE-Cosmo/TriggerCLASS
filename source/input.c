@@ -487,7 +487,7 @@ int input_init(
       if (fzw.target_value[1] > 0.001)
       {
         fzw.unknown_param_NEDE[0] = x_inout[0];
-        fzw.unknown_param_NEDE[1] = x_inout[1];
+        fzw.unknown_param_NEDE[1] = x_inout[1]*1.05;
 
         for (counter = 0; counter < unknown_parameters_size; counter++)
         {

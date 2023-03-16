@@ -8242,7 +8242,7 @@ int perturb_total_stress_energy(
       }
     }
 
-    /*New EDE*/
+    /*New EDE*/ //stop4
     /*Here the NEDE contribution to the perturbed EMT is calculated. Note that we excluded the CC phase as there are no contributions in that case. This part is important as it describes the feedback of the EDE pert. into the gravitational sector. */
     if (pba->has_NEDE_pert == _TRUE_)
     {
