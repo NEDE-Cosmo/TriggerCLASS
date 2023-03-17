@@ -5979,17 +5979,17 @@ int perturb_vector_init(
 
               fac = 6.0 * pow(H, 2) / (9.0 * pow(H, 4) - 4 * (4 * pow(H, 2) * pow(m, 2) + pow(H_prime, 2) / pow(a, 2)));
 
-              phi_c_p = fac * (4 * H * m * phi_fluid + 3.0 * pow(H, 2) * phi_prime_fluid / a / m + 2.0 * H_prime * phi_prime_fluid / pow(a, 2) / m);
+              phi_c_p = fac * (4.0 * H * m * phi_fluid + 3.0 * pow(H, 2) * phi_prime_fluid / a / m + 2.0 * H_prime * phi_prime_fluid / pow(a, 2) / m);
 
-              phi_s_p = fac * (3 * pow(H, 2) * phi_fluid - 2.0 * H_prime / a * phi_fluid + 4.0 * H * phi_prime_fluid / a);
+              phi_s_p = fac * (3.0 * pow(H, 2) * phi_fluid - 2.0 * H_prime / a * phi_fluid + 4.0 * H * phi_prime_fluid / a);
 
               phi_c = phi_fluid;
 
               phi_s = phi_prime_fluid / a / m - phi_c_p;
 
-              delta_phi_c_p = H / (-8.0 * pow(H * k, 2) * m + a * a * m * (9 * pow(H, 4) - 4 * (4 * pow(H * m, 2) + pow(H_prime / a, 2)))) * (2.0 * k * k * (3.0 * H * H * delta_phi_fluid + 2.0 * H_prime / a * delta_phi_fluid - 4.0 * H * delta_phi_prime_fluid / a) + a * a * m * (2.0 * hL_prime / a * H_prime / a * (phi_c_p + phi_s) + 3.0 * H * H * m * (hL_prime / a / m * (phi_c_p + phi_s) + 8.0 * delta_phi_fluid) + 18.0 * pow(H, 3) * delta_phi_prime_fluid / a / m + 4.0 * H * m * (hL_prime / a * (phi_c - phi_s_p) + 3.0 * H_prime / a / m * delta_phi_prime_fluid / a / m)));
+              delta_phi_c_p = H / (-8.0 * pow(H * k, 2) * m + a * a * m * (9 * pow(H, 4) - 4.0 * (4.0 * pow(H * m, 2) + pow(H_prime / a, 2)))) * (2.0 * k * k * (3.0 * H * H * delta_phi_fluid + 2.0 * H_prime / a * delta_phi_fluid - 4.0 * H * delta_phi_prime_fluid / a) + a * a * m * (2.0 * hL_prime / a * H_prime / a * (phi_c_p + phi_s) + 3.0 * H * H * m * (hL_prime / a / m * (phi_c_p + phi_s) + 8.0 * delta_phi_fluid) + 18.0 * pow(H, 3) * delta_phi_prime_fluid / a / m + 4.0 * H * m * (hL_prime / a * (phi_c - phi_s_p) + 3.0 * H_prime / a / m * delta_phi_prime_fluid / a / m)));
 
-              delta_phi_s_p = -H / pow(a, 2) / m / (-8.0 * pow(H * k, 2) * m + a * a * m * (9 * pow(H, 4) - 4.0 * (4.0 * pow(H * m, 2) + pow(H_prime / a, 2)))) * (-4.0 * H * pow(k, 4) * delta_phi_fluid - 2.0 * pow(a * k, 2) * m * (H * m * (hL_prime / a / m * (phi_c_p + phi_s) + 4.0 * delta_phi_fluid) + 3.0 * pow(H, 2) * delta_phi_prime_fluid / a / m + 2.0 * H_prime / a * delta_phi_prime_fluid / a / m) - pow(a * a * m, 2) * (2.0 * hL_prime / a * H_prime / a * (-phi_c + phi_s_p) + 18.0 * pow(H, 3) * delta_phi_fluid + 4.0 * H * m * (hL_prime / a * (phi_c_p + phi_s) - 3.0 * H_prime / a / m * delta_phi_fluid) + 3.0 * H * H * m * (hL_prime / a / m * phi_c - hL_prime / a / m * phi_s_p + 8.0 * delta_phi_prime_fluid / a / m)));
+              delta_phi_s_p = -H / pow(a, 2) / m / (-8.0 * pow(H * k, 2) * m + a * a * m * (9.0 * pow(H, 4) - 4.0 * (4.0 * pow(H * m, 2) + pow(H_prime / a, 2)))) * (-4.0 * H * pow(k, 4) * delta_phi_fluid - 2.0 * pow(a * k, 2) * m * (H * m * (hL_prime / a / m * (phi_c_p + phi_s) + 4.0 * delta_phi_fluid) + 3.0 * pow(H, 2) * delta_phi_prime_fluid / a / m + 2.0 * H_prime / a * delta_phi_prime_fluid / a / m) - pow(a * a * m, 2) * (2.0 * hL_prime / a * H_prime / a * (-phi_c + phi_s_p) + 18.0 * pow(H, 3) * delta_phi_fluid + 4.0 * H * m * (hL_prime / a * (phi_c_p + phi_s) - 3.0 * H_prime / a / m * delta_phi_fluid) + 3.0 * H * H * m * (hL_prime / a / m * phi_c - hL_prime / a / m * phi_s_p + 8.0 * delta_phi_prime_fluid / a / m)));
 
               delta_phi_c = delta_phi_fluid;
 
@@ -6014,6 +6014,8 @@ int perturb_vector_init(
 
               // printf("tau: %f, H: %e, a: %e, H_prime: %e ,factor: %e, rho_tfa:%e , p_tfa: %e\n",tau,H,a,H_prime, fac,rho_tfa, p_tfa);
               // printf("delta_rho_old: %e, delta_rho_Hu: %e, Theta: %e, Theta Hu: %e \n",ppv->y[ppv->index_pt_delta_trigger_fld]*ppw->pvecback[pba->index_bg_rho_trigger],delta_rho_trigger,ppw->pv->y[ppw->pv->index_pt_theta_hat_trigger_cycle_integral] / (pba->tau_trigger_fluid - pba->tau_trigger_average_start)*ppw->pvecback[pba->index_bg_rho_trigger],rho_plus_p_theta_trigger_fld);
+              // printf("k: %f, aH: %f, h': %f, eta': %e, alpha1: %f, alpha2: %f \n",k,a_prime_over_a ,ppw->pvecmetric[ppw->index_mt_h_prime],ppw->pvecmetric[ppw->index_mt_eta_prime]/tau,(ppw->pvecmetric[ppw->index_mt_h_prime] + 6.0*ppw->pvecmetric[ppw->index_mt_eta_prime])/(2.0 *k*k),ppw->pvecmetric[ppw->index_mt_alpha]);
+
             }
 
             if (pba->has_idr == _TRUE_)
@@ -6548,6 +6550,7 @@ int perturb_initial_conditions(struct precision *ppr,
       // eta = ppr->curvature_ini * (1.-ktau_two/12./(15.+4.*fracnu)*(5.+4.*fracnu - (16.*fracnu*fracnu+280.*fracnu+325)/10./(2.*fracnu+15.)*tau*om)) /  s2_squared;
       // eta = ppr->curvature_ini * s2_squared * (1.-ktau_two/12./(15.+4.*fracnu)*(15.*s2_squared-10.+4.*s2_squared*fracnu - (16.*fracnu*fracnu+280.*fracnu+325)/10./(2.*fracnu+15.)*tau*om));
       eta = ppr->curvature_ini * (1. - ktau_two / 12. / (15. + 4. * fracnu) * (5. + 4. * s2_squared * fracnu - (16. * fracnu * fracnu + 280. * fracnu + 325) / 10. / (2. * fracnu + 15.) * tau * om));
+      //printf("k: %f, ini eta_p: %e \n",k, 2*(1.-eta)/tau/tau);
     }
 
     /* isocurvature initial conditions taken from Bucher, Moodely,

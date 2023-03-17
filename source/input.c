@@ -223,6 +223,7 @@ int input_init(
   double xzero;
   int target_indices[_NUM_TARGETS_];
   double *dxdF, *x_inout;
+  double f_NEDE;
 
   char string1[_ARGUMENT_LENGTH_MAX_];
   FILE *param_output;
@@ -422,7 +423,22 @@ int input_init(
     else
     {
       /* We need to do multidimensional root finding */
+
       /*New EDE: Instead of a multi-dim shooting, we do two sequential shootings, which is good enough but more stable.*/ // stop1
+      class_call(parser_read_double(pfc,
+                                    "f_NEDE",
+                                    &param1,
+                                    &flag1,
+                                    errmsg),
+                 errmsg,
+                 errmsg);
+      if (flag1 == _TRUE_)
+      {
+        f_NEDE = param1;
+
+        if (input_verbose > 0)
+          printf("We do a a sequence of 1d shootings for NEDE (avoiding problems with 2D shooting).\n");
+      }
 
       if (input_verbose > 0)
       {
@@ -439,60 +455,43 @@ int input_init(
                                  &fzw,
                                  errmsg),
                  errmsg, errmsg);
-      /*
-            class_call_try(fzero_Newton(input_try_unknown_parameters,
-                                        x_inout,
-                                        dxdF,
-                                        unknown_parameters_size,
-                                        1e-4,
-                                        1e-6,
-                                        &fzw,
-                                        &fevals,
-                                        errmsg),
-                           errmsg, pba->shooting_error, shooting_failed = _TRUE_);
-      */
-
-      /* Store xzero */
-      fzw.unknown_param_NEDE[0] = x_inout[0];
-      fzw.unknown_param_NEDE[1] = x_inout[1];
-
-      for (counter = 0; counter < unknown_parameters_size; counter++)
-      {
-        fzw.counter = counter;
-        // printf("counter: %d, xinout1 %f, xinout2 %f, size: %d ", counter, x_inout[0], x_inout[1], unknown_parameters_size);
-        class_call_try(input_find_root_NEDE(x_inout,
-                                            dxdF,
-                                            counter,
-                                            &fevals,
-                                            &fzw,
-                                            ppr->tol_shooting_1d,
-                                            errmsg),
-                       errmsg,
-                       pba->shooting_error,
-                       shooting_failed = _TRUE_);
-        fzw.unknown_param_NEDE[i] = x_inout[i];
-        sprintf(fzw.fc.value[fzw.unknown_parameters_index[counter]],
-                "%e", x_inout[counter]);
-        if (input_verbose > 0)
-        {
-          fprintf(stdout, " -> found '%s = %s'\n",
-                  fzw.fc.name[fzw.unknown_parameters_index[counter]],
-                  fzw.fc.value[fzw.unknown_parameters_index[counter]]);
-        }
-      }
-
-      /*New EDE: the second shooting is only necessary if the amount of Omega_trigger is sizeable. In that case we need to readjust the shooting for m.*/
-      // printf("val: %f",fzw.target_value[1]);
-
-      if (fzw.target_value[1] > 0.001)
-      {
-        fzw.unknown_param_NEDE[0] = x_inout[0];
-        fzw.unknown_param_NEDE[1] = x_inout[1]*1.05;
+      
+      if (f_NEDE == 0.0)
+      { // Normal 2D case, skipped for NEDE
+        class_call_try(fzero_Newton(input_try_unknown_parameters,
+                                    x_inout,
+                                    dxdF,
+                                    unknown_parameters_size,
+                                    1e-4,
+                                    1e-6,
+                                    &fzw,
+                                    &fevals,
+                                    errmsg),
+                       errmsg, pba->shooting_error, shooting_failed = _TRUE_);
 
         for (counter = 0; counter < unknown_parameters_size; counter++)
         {
           fzw.counter = counter;
-          // printf("counter: %d, xinout1 %f, xinout2 %f, size: %d ", counter, x_inout[0], x_inout[1], unknown_parameters_size);
+
+          sprintf(fzw.fc.value[fzw.unknown_parameters_index[counter]],
+                  "%e", x_inout[counter]);
+          if (input_verbose > 0)
+          {
+            fprintf(stdout, " -> found '%s = %s'\n",
+                    fzw.fc.name[fzw.unknown_parameters_index[counter]],
+                    fzw.fc.value[fzw.unknown_parameters_index[counter]]);
+          }
+        }
+      }
+      {
+
+        fzw.unknown_param_NEDE[0] = x_inout[0]; // Trigger_mass
+        fzw.unknown_param_NEDE[1] = x_inout[1]; // Trigger_phi_ini
+
+        for (counter = 0; counter < unknown_parameters_size; counter++)
+        {
+          fzw.counter = counter;
+          // printf("counter: %d, xinout1 %e, xinout2 %e, size: %d  \n", counter, x_inout[0], x_inout[1], unknown_parameters_size);
           class_call_try(input_find_root_NEDE(x_inout,
                                               dxdF,
                                               counter,
@@ -513,8 +512,46 @@ int input_init(
                     fzw.fc.value[fzw.unknown_parameters_index[counter]]);
           }
         }
-      }
 
+        // New EDE: the second shooting is only necessary if the amount of Omega_trigger is sizeable. In that case we need to readjust the shooting for m.
+        //  printf("val: %f",fzw.target_value[1]);
+
+        if (fzw.target_value[1] > 0.001)
+        {
+          fzw.unknown_param_NEDE[0] = x_inout[0];
+          fzw.unknown_param_NEDE[1] = x_inout[1];
+
+          for (counter = 0; counter < unknown_parameters_size; counter++)
+          {
+            if (counter == 1)
+            {
+              x_inout[1] = x_inout[1] * 1.05; // New EDE: Before the second shooting of phi_ini we change the guess value from the previous shooting, so it is not too good a guess, which can lead to numerical problems otherwise.
+              fzw.unknown_param_NEDE[1] = x_inout[1];
+            }
+            fzw.counter = counter;
+            // printf("counter: %d, xinout1 %e, xinout2 %e, size: %d \n", counter, x_inout[0], x_inout[1], unknown_parameters_size);
+            class_call_try(input_find_root_NEDE(x_inout,
+                                                dxdF,
+                                                counter,
+                                                &fevals,
+                                                &fzw,
+                                                ppr->tol_shooting_1d,
+                                                errmsg),
+                           errmsg,
+                           pba->shooting_error,
+                           shooting_failed = _TRUE_);
+            fzw.unknown_param_NEDE[i] = x_inout[i];
+            sprintf(fzw.fc.value[fzw.unknown_parameters_index[counter]],
+                    "%e", x_inout[counter]);
+            if (input_verbose > 0)
+            {
+              fprintf(stdout, " -> found '%s = %s'\n",
+                      fzw.fc.name[fzw.unknown_parameters_index[counter]],
+                      fzw.fc.value[fzw.unknown_parameters_index[counter]]);
+            }
+          }
+        }
+      }
       free(x_inout);
       free(dxdF);
     }
@@ -4616,8 +4653,8 @@ int input_get_guess(double *xguess,
       xguess[index_guess] = trigger_mass;
       // dxdy[index_guess] = 2 * pfzw->target_value[index_guess] / pow(ba.Bubble_trigger_H_over_m * 1250., 2.);
       dxdy[index_guess] = 0.5 * trigger_mass * (3. * Omega_M * pow((1. + z_NEDE), 2) + 4. * Omega_M * pow((1. + z_NEDE), 3) / (3001.)) / (Omega_M * pow((1. + z_NEDE), 3) + Omega_M * pow((1. + z_NEDE), 4) / (3001.) + (1. - Omega_M));
-      //printf("xguess = %g,dxdy=%g \n", xguess[index_guess], dxdy[index_guess]);
-      // printf("val: %f \n", z_NEDE);
+      // printf("xguess = %g,dxdy=%g \n", xguess[index_guess], dxdy[index_guess]);
+      //  printf("val: %f \n", z_NEDE);
       break;
 
     case Omega0_NEDE_trigger_DM: // Guess for NEDE shooting.
@@ -4629,7 +4666,7 @@ int input_get_guess(double *xguess,
       xguess[index_guess] = pow(75. * ba.H0 * ba.H0 * pfzw->target_value[index_guess] * pow(z_NEDE, 3) / pow(trigger_mass, 2), 0.5);
       dxdy[index_guess] = 0.5 * xguess[index_guess] / pfzw->target_value[index_guess];
       // dxdy[index_guess] = dxdy[index_guess] * pfzw->target_value[index_guess];
-      //printf("xguess = %g,dxdy=%g, z_decay = %g \n", xguess[index_guess], dxdy[index_guess], decay_redshift);
+      // printf("xguess = %g,dxdy=%g, z_decay = %g \n", xguess[index_guess], dxdy[index_guess], decay_redshift);
       break;
     }
     // printf("xguess = %g\n",xguess[index_guess]);
