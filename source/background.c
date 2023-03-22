@@ -383,7 +383,7 @@ int background_functions(
   {
     if ((pba->has_NEDE_trigger_DM == _FALSE_) || (a_rel < pba->a_trigger_fluid))
     {
-      //This part is relevant before the fluid approximation is turned on.
+      // This part is relevant before the fluid approximation is turned on.
       phi = pvecback_B[pba->index_bi_phi_trigger];
       phi_prime = pvecback_B[pba->index_bi_phi_prime_trigger];
       pvecback[pba->index_bg_phi_trigger] = phi;                                                              // value of the trigger field phi
@@ -402,9 +402,9 @@ int background_functions(
     }
     else
     {
-      //New EDE: This part is relevant after the fluid approximation has been turned on.
-      
-      //We still fill the phi array with trivial values.
+      // New EDE: This part is relevant after the fluid approximation has been turned on.
+
+      // We still fill the phi array with trivial values.
 
       phi = pvecback_B[pba->index_bi_phi_trigger];
       phi_prime = pvecback_B[pba->index_bi_phi_prime_trigger];
@@ -414,17 +414,15 @@ int background_functions(
       pvecback[pba->index_bg_dV_trigger] = dV_trigger(pba, phi);   // dV_scf(pba,phi); //potential' as function of phi
       pvecback[pba->index_bg_ddV_trigger] = ddV_trigger(pba, phi); // ddV_scf(pba,phi); //potential'' as function of phi
 
-
-      //Here we copy the fluid energy density from the integration vector and add it to rho_tot. // stop4 
+      // Here we copy the fluid energy density from the integration vector and add it to rho_tot. // stop4
       pvecback[pba->index_bg_rho_trigger] = pvecback_B[pba->index_bi_rho_trigger_fld];
 
-      //And add it to the total energy density.
+      // And add it to the total energy density.
       rho_tot += pvecback[pba->index_bg_rho_trigger];
 
       // Everything else is added later after we have calculated H and H_prime below.
       dp_dloga += 0.0;
       p_tot += 0.0;
-
     }
   }
 
@@ -565,13 +563,12 @@ int background_functions(
       only place where the Friedmann equation is assumed. Remember
       that densities are all expressed in units of \f$ [3c^2/8\pi G] \f$, ie
       \f$ \rho_{class} = [8 \pi G \rho_{physical} / 3 c^2]\f$ */
-  
-  pvecback[pba->index_bg_H] = sqrt(rho_tot - pba->K / a / a);
 
+  pvecback[pba->index_bg_H] = sqrt(rho_tot - pba->K / a / a);
 
   if (pba->has_NEDE_trigger == _TRUE_)
   {
-    //New EDE: Here we calculate the pressure contribution of the Trigger field when we are in the fluid approximation.
+    // New EDE: Here we calculate the pressure contribution of the Trigger field when we are in the fluid approximation.
     if ((pba->has_NEDE_trigger_DM == _TRUE_) && (a_rel >= pba->a_trigger_fluid))
     {
       class_call(background_quantities_NEDE_trigger(pba, a_rel, a_rel * pvecback[pba->index_bg_H], pvecback[pba->index_bg_H], 0, &w_trigger, NULL, NULL),
@@ -620,13 +617,13 @@ int background_functions(
     }
     else
     {
-      //Similarly in the fluid case.
+      // Similarly in the fluid case.
       class_call(background_quantities_NEDE_trigger(pba, a_rel, a_rel * pvecback[pba->index_bg_H], pvecback[pba->index_bg_H], pvecback[pba->index_bg_H_prime], &w_trigger, &dw_over_da_trigger, NULL),
                  pba->error_message,
                  pba->error_message);
 
       dp_dloga_trigger = (a * dw_over_da_trigger - 3 * (1 + w_trigger) * w_trigger) * pvecback[pba->index_bg_rho_trigger];
-      pvecback[pba->index_bg_p_tot_prime] +=  a * pvecback[pba->index_bg_H] * dp_dloga_trigger;
+      pvecback[pba->index_bg_p_tot_prime] += a * pvecback[pba->index_bg_H] * dp_dloga_trigger;
     }
   }
 
@@ -812,7 +809,7 @@ int background_quantities_NEDE(
   return _SUCCESS_;
 }
 
-//New EDE: This function provides different background quantities that characterize the the trigger field in the fluid approximation. //stop3
+// New EDE: This function provides different background quantities that characterize the the trigger field in the fluid approximation. //stop3
 int background_quantities_NEDE_trigger(
     struct background *pba,
     double a,
@@ -826,7 +823,7 @@ int background_quantities_NEDE_trigger(
   double w_prime;
   double w_local = 0.;
 
- //We use the description  proposed in arXiv:2201.10238
+  // We use the description  proposed in arXiv:2201.10238
 
   w_local = 3.0 / 2.0 * pow(H / pba->NEDE_trigger_mass, 2);
   w_prime = w_local * 2 * H_prime / H;
@@ -2109,7 +2106,8 @@ int background_solve(
           printf("New EDE decayed at redshift: %f ; fraction New EDE: %f; fraction trigger field: %e \n", pba->z_decay, pba->Omega_NEDE * pow(pba->H0, 2) / (pow(pvecback[pba->index_bg_H], 2)), pba->Omega_trigger_decay * pow(pba->H0, 2) / pow(pvecback[pba->index_bg_H], 2));
         }
       }
-      
+
+      // printf("tau: %e, ",tau_end);
       /*New EDE:  make integration finer around decay time; this increases the precision of the code a lot. d is the size of the interval for which we make the integration finer. We smothely turn the resolution enhancement on and off with an exponential. The resolution enhancement is controlled by ppr->decay_res_enhancement*/
       delta_z = 2 * ppr->back_integration_stepsize / a;
       if ((1. / a - 1. < pba->z_decay + delta_z) && (1. / a - 1. > pba->z_decay - delta_z) && (pba->z_decay > 1.))
@@ -2123,7 +2121,7 @@ int background_solve(
       if ((pba->has_NEDE_trigger_DM == _TRUE_) && (pba->trigger_fluid_flag == _FALSE_))
       {
         // Here we switch to the fluid approximation.
-       
+
         if (pvecback[pba->index_bg_H] < pba->Trigger_fluid_H_over_m * pba->NEDE_trigger_mass)
         {
 
@@ -2381,7 +2379,7 @@ int background_solve(
   if (pba->has_NEDE_trigger == _TRUE_ && pba->has_NEDE == _TRUE_)
   {
     pba->Omega0_trigger = pvecback[pba->index_bg_rho_trigger] / pvecback[pba->index_bg_rho_crit];
-    // printf("trigger_ini = %e, Omega0_trigger = %e \n", pba->NEDE_trigger_ini, pba->Omega0_trigger);
+    //printf("trigger_ini = %e, Omega0_trigger = %e \n", pba->NEDE_trigger_ini, pba->Omega0_trigger);
     // makeprintf("mass_trigger = %e, z_decay = %e \n", pba->NEDE_trigger_mass, pba->z_decay);
   }
 
@@ -3048,20 +3046,22 @@ int background_derivs(
     dy[pba->index_bi_phi_trigger] = y[pba->index_bi_phi_prime_trigger];
     dy[pba->index_bi_phi_prime_trigger] = -y[pba->index_bi_a] *
                                           (2 * pvecback[pba->index_bg_H] * y[pba->index_bi_phi_prime_trigger] + y[pba->index_bi_a] * dV_trigger(pba, y[pba->index_bi_phi_trigger]));
+    if (pba->has_NEDE_trigger_DM == _TRUE_)
+    {
+      if (a >= pba->a_trigger_fluid)
+      {
+        // New EDE: Here we use a fluid to describe the evolution of the trigger.
 
-    if (a >= pba->a_trigger_fluid)
-    { 
-      //New EDE: Here we use a fluid to describe the evolution of the trigger.
+        class_call(background_quantities_NEDE_trigger(pba, a, a * H, H, pvecback[pba->index_bg_H_prime], &w_trigger, &dw_over_da_trigger, NULL), pba->error_message, pba->error_message);
 
-      class_call(background_quantities_NEDE_trigger(pba, a, a * H, H, pvecback[pba->index_bg_H_prime], &w_trigger, &dw_over_da_trigger, NULL), pba->error_message, pba->error_message);
-      
-      //This is using the energy conservation equation to integrate rho.
+        // This is using the energy conservation equation to integrate rho.
 
-      dy[pba->index_bi_rho_trigger_fld] = -3. * y[pba->index_bi_a] * pvecback[pba->index_bg_H] * (1. + w_trigger) * y[pba->index_bi_rho_trigger_fld];
-    }
-    else
-    { //New EDE: Before the switch, the fluid variables are not used.
-      dy[pba->index_bi_rho_trigger_fld] = 0.0;
+        dy[pba->index_bi_rho_trigger_fld] = -3. * y[pba->index_bi_a] * pvecback[pba->index_bg_H] * (1. + w_trigger) * y[pba->index_bi_rho_trigger_fld];
+      }
+      else
+      { // New EDE: Before the switch, the fluid variables are not used.
+        dy[pba->index_bi_rho_trigger_fld] = 0.0;
+      }
     }
   }
 

@@ -455,7 +455,7 @@ int input_init(
                                  &fzw,
                                  errmsg),
                  errmsg, errmsg);
-      
+
       if (f_NEDE == 0.0)
       { // Normal 2D case, skipped for NEDE
         class_call_try(fzero_Newton(input_try_unknown_parameters,
@@ -483,6 +483,7 @@ int input_init(
           }
         }
       }
+      else
       {
 
         fzw.unknown_param_NEDE[0] = x_inout[0]; // Trigger_mass
@@ -1514,7 +1515,7 @@ int input_read_parameters(
 
       if (pba->Omega0_trigger == 0)
         class_test(pba->NEDE_trigger_ini > 0.005, errmsg,
-                   "The initial value for the trigger field is too large for it to be negligible. Either reduce it or use Omega0_NEDE_trigger_DM as input.");
+                   "The initial value for the trigger field (phi_ini = %e) is too large for it to be negligible. Either reduce it or use Omega0_NEDE_trigger_DM as input.", pba->NEDE_trigger_ini);
     }
 
     if (pba->Trigger_fluid_H_over_m > 0)
@@ -4894,6 +4895,11 @@ int input_auxillary_target_conditions(struct file_content *pfc,
   case Omega_scf:
   case Omega_ini_dcdm:
   case omega_ini_dcdm:
+    /* Check that Omega's or omega's are nonzero: */
+    if (target_value == 0.)
+      *aux_flag = _FALSE_;
+    break;
+  case Omega0_NEDE_trigger_DM:
     /* Check that Omega's or omega's are nonzero: */
     if (target_value == 0.)
       *aux_flag = _FALSE_;
