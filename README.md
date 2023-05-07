@@ -11,7 +11,7 @@ New in version 4 [20 Dec 2020]: TriggerCLASS now accepts f_NEDE as input paramet
 
 New in version 5 [12 Oct 2022]: TriggerCLASS now takes the decay redshift z_decay_NEDE (rather than the trigger mass) as input. The trigger mass is then determined via a shooting method.  Output improvments and more detailed comments. 
 
-New in version 6.1 [7 May 2023]: TriggerCLASS now allows for Omega0_NEDE_trigger_DM as input, controlling the trigger abundance today (which contributed to DM).
+New in version 6.1 [7 May 2023]: TriggerCLASS now allows for Omega0_NEDE_trigger_DM as input, controlling the trigger abundance today (which contributes to DM).
 
 
 Compiling TriggerCLASS and getting started
@@ -42,5 +42,5 @@ Support
 
 To get support, please open a new issue on
 
-https://github.com/flo1984/TriggerClass
+https://github.com/NEDE-Cosmo/TriggerCLASS
 
