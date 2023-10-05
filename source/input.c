@@ -3308,6 +3308,23 @@ int input_read_parameters(
              errmsg,
              errmsg);
 
+  class_call(parser_read_string(pfc,
+                                "non_linear",
+                                &(string2),
+                                &(flag2),
+                                errmsg),
+             errmsg,
+             errmsg);
+
+  if ((flag1 == _TRUE_) && (flag2 == _TRUE_)) {
+    class_stop(errmsg,
+          "You cannot input both 'non linear' and 'non_linear'. Choose one!");
+  }
+  else if (flag2 == _TRUE_) {
+    strcpy(string1, string2);
+    flag1 = _TRUE_;
+  }
+
   if (flag1 == _TRUE_)
   {
 
