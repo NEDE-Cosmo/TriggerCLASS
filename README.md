@@ -40,7 +40,7 @@ The NewEDE.ini also explains the NEDE input parameters.
 MCMC analysis
 ------
 
-In order to perform a MCMC analysis, we recommend using MontePython, https://github.com/brinckmann/montepython_public, and follow their installation instructions. Our baseline MCMC run (as discussed in https://arxiv.org/abs/2006.06686) can be found under input/run_NEDE_canonical.param. To make it run, you first need to update MontePython with the files from the folder montepython_tree. In particular, this will update the data.py to translate the NEDE input parameters. The corresponding covariance matrix and bestfit file can be found in the respective subfolders covmat and bestfit.
+MCMC analyses can be performed with MontePython, https://github.com/brinckmann/montepython_public, or with Cobaya, https://cobaya.readthedocs.io. Our baseline MontePython run (as discussed in https://arxiv.org/abs/2006.06686) can be found under input/run_NEDE_canonical.param. To make it run, you first need to update MontePython with the files from the folder montepython_tree. In particular, this will update the data.py to translate the NEDE input parameters. The corresponding covariance matrix and bestfit file can be found in the respective subfolders covmat and bestfit. There is also a Cobaya example run file together with a covariance matrix in the cobaya folder that can be used as a starting point for Cobaya runs.
 
 Support
 -------
@@ -48,4 +48,3 @@ Support
 To get support, please open a new issue on
 
 https://github.com/NEDE-Cosmo/TriggerCLASS
-

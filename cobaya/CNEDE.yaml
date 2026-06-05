@@ -1,0 +1,213 @@
+#debug: true
+theory:
+  classy:
+    #path: 
+    extra_args:
+      N_ur: 2.0308
+      N_ncdm: 1
+      m_ncdm: 0.06
+      lensing: 'yes'
+      modes: s
+      output: lCl,tCl,pCl,mPk
+      H_over_m_NEDE: 0.2
+      Junction_tag: 1
+      three_cvis2_NEDE: 0
+      NEDE_ceff_nature: 'tracking'
+      NEDE_trigger_fluid_H_m: 0.01
+
+      #data.cosmo_arguments['NEDE_trigger_ini'] = 0.0001 # Only needs to be defined, when Omega0_NEDE_trigger_DM is not set. A value of 0.0001 ensures that the trigger is sufficiently subdominant.
+
+      #makes sure that all modes start before the transition of EDE, i.e. before z=30k.
+      background_evolver: 1
+      evolver: 1
+      start_large_k_at_tau_h_over_tau_k: 0.000001
+      start_small_k_at_tau_c_over_tau_h: 0.000001 
+
+      #Increase precison settings in case of numerical issues with the shooting method (so far stable with default settings):
+      #tol_shooting_deltax: 1e-8
+      #tol_shooting_deltaF: 1e-8
+      #tol_shooting_deltax_rel: 1e-8
+      #tol_background_integration: 1e-10
+      #tol_perturbations_integration: 1e-8
+      #perturbations_integration_stepsize: 0.5
+      #perturbations_sampling_stepsize: 0.003
+
+likelihood: 
+  planck_2018_lowl.TT: null
+  planck_2018_lowl.EE: null
+  planck_2018_highl_plik.TTTEEE: null
+  planck_2018_lensing.clik: null
+  sn.pantheonplusshoes:  null
+  bao.desi_dr2: null
+  
+params:
+  logA:
+    prior:
+      min: 1.61
+      max: 3.91
+    ref:
+      dist: norm
+      loc: 3.06
+      scale: 0.001
+    proposal: 0.001
+    latex: \log(10^{10} A_\mathrm{s})
+    drop: true
+  n_s:
+    prior:
+      min: 0.8
+      max: 1.2
+    ref:
+      dist: norm
+      loc: 0.98
+      scale: 0.004
+    proposal: 0.002
+    latex: n_\mathrm{s}
+  H0:
+    prior:
+      min: 40
+      max: 100
+    ref:
+      dist: norm
+      loc: 73
+      scale: 2
+    proposal: 2
+    latex: H_0
+  tau_reio:
+    value: 0.06
+    latex: \tau_\mathrm{reio}
+  omega_b:
+    prior:
+      min: 0.005
+      max: 0.1
+    ref:
+      dist: norm
+      loc: 0.023
+      scale: 0.0001
+    proposal: 0.0001
+    latex: \Omega_\mathrm{b} h^2
+  omega_cdm:
+    prior:
+      min: 0.001
+      max: 0.99
+    ref:
+      dist: norm
+      loc: 0.125
+      scale: 0.001
+    proposal: 0.0005
+    latex: \Omega_\mathrm{c} h^2
+  Omega_m:
+    latex: \Omega_\mathrm{m}
+    derived: true
+  omegamh2:
+    derived: 'lambda Omega_m, H0: Omega_m*(H0/100)**2'
+    latex: \Omega_\mathrm{m} h^2
+  Omega_Lambda:
+    latex: \Omega_\Lambda
+    derived: true
+  A_s:
+    value: 'lambda logA: 1e-10*np.exp(logA)'
+    derived: true
+    latex: A_\mathrm{s}
+  YHe:
+    latex: Y_\mathrm{P}
+    derived: true
+  z_reio:
+    latex: z_\mathrm{re}
+    derived: true
+  sigma8:
+    latex: \sigma_8
+    derived: true
+  s8h5:
+    derived: 'lambda sigma8, H0: sigma8*(H0*1e-2)**(-0.5)'
+    latex: \sigma_8/h^{0.5}
+  s8omegamp5:
+    derived: 'lambda sigma8, Omega_m: sigma8*Omega_m**0.5'
+    latex: \sigma_8 \Omega_\mathrm{m}^{0.5}
+  s8omegamp25:
+    derived: 'lambda sigma8, Omega_m: sigma8*Omega_m**0.25'
+    latex: \sigma_8 \Omega_\mathrm{m}^{0.25}
+  A:
+    derived: 'lambda A_s: 1e9*A_s'
+    latex: 10^9 A_\mathrm{s}
+  clamp:
+    derived: 'lambda A_s, tau_reio: 1e9*A_s*np.exp(-2*tau_reio)'
+    latex: 10^9 A_\mathrm{s} e^{-2\tau}
+  age:
+    latex: '{\rm{Age}}/\mathrm{Gyr}'
+    derived: true
+  rs_drag:
+    latex: r_\mathrm{drag}
+    derived: true
+  S8:
+    derived: ' lambda sigma8, Omega_m: sigma8*(Omega_m/0.3)**0.5'
+    latex: S_8
+  omegamh3:
+    derived: 'lambda Omega_m, H0: Omega_m*(H0/100)**3'
+    latex: \Omega_\mathrm{m} h^3
+  rs_d_h:
+    latex: r_\mathrm{drag} h
+    derived: true
+  NEDE_trigger_mass:
+    latex: m^\mathrm{NEDE}_\phi}
+    derived: true
+
+  f_NEDE:
+    prior:
+      min: 0.00001
+      max: 0.3
+    ref:
+      dist: norm
+      loc: 0.14
+      scale: 0.014
+    proposal: 0.01
+    latex: f_\mathrm{NEDE}
+  log10z:
+    prior:
+      min: 2
+      max: 4
+    ref:
+      dist: norm
+      loc: 3.6
+      scale: 0.08
+    proposal: 0.08
+    drop: True                    # don't pass log10_z to theory
+    latex: \log_{10} z_\mathrm{NEDE}
+  three_eos_NEDE:
+    prior:
+      min: 1
+      max: 3
+    ref:
+      dist: norm
+      loc: 2
+      scale: 0.08
+    proposal: 0.08
+    latex: 3 w_\mathrm{NEDE}
+  Omega0_NEDE_trigger_DM:
+    prior:
+      min: 0.00001
+      max: 0.1
+    ref:
+      dist: norm
+      loc: 0.01
+      scale: 0.01
+    proposal: 0.01
+    latex: \Omega_\mathrm{DM}^\mathrm{trigger}
+  z_decay_NEDE:
+    value: "lambda log10z: 10**log10z"
+    derived: False                
+    latex: z_*
+
+
+
+
+
+
+sampler:
+  mcmc:
+    proposal_scale: 1.9
+    Rminus1_stop: 0.005
+    Rminus1_cl_stop: 0.2
+    max_tries: .inf
+    covmat: /Users/florianniedermann/Documents/Cosmo/output/CNEDE_Planck_SNe_DESI_M_v2/CNEDE_start.covmat
+timing: true
+#output: chains/chains
